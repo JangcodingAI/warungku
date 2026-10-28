@@ -188,7 +188,7 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
 .nrow{display:flex;align-items:center;gap:9px;margin:0;font-size:12px;font-weight:600;color:var(--ink);cursor:pointer}
 .nrow input{width:18px;height:18px;padding:0;flex:none;accent-color:var(--green)}
 /* toast */
-.toasts{position:fixed;z-index:200;top:calc(14px + env(safe-area-inset-top));right:14px;display:grid;gap:10px;width:min(390px,calc(100vw - 28px));pointer-events:none}
+.toasts{position:fixed;z-index:200;top:calc(86px + env(safe-area-inset-top));right:14px;display:grid;gap:10px;width:min(390px,calc(100vw - 28px));pointer-events:none}
 .tt{position:relative;pointer-events:auto;display:flex;gap:12px;align-items:flex-start;padding:14px 12px 17px 14px;background:#fff;border:1px solid #efe3d1;border-radius:18px;box-shadow:0 18px 44px #1a110a33;overflow:hidden;animation:ttin .38s cubic-bezier(.2,.9,.3,1.15)}
 .tt.out{animation:ttout .22s ease-in forwards}
 @keyframes ttin{from{opacity:0;transform:translateX(30px) scale(.96)}}
@@ -257,13 +257,38 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
 .rvrep{margin-top:10px;padding:10px 14px;border-radius:12px;background:#f6f1e8;font-size:13px;line-height:1.5}.rvrep b{display:block;color:#9a5a00;font-size:11px;margin-bottom:2px}
 .rvform{margin-top:10px;display:grid;gap:8px}.rvform textarea{min-height:60px;height:auto}.rvact{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 @media(max-width:860px){
-.toasts{right:14px;left:14px;width:auto}
+.toasts{right:14px;left:14px;width:auto;top:auto;bottom:calc(98px + env(safe-area-inset-bottom))}
 .chatx{grid-template-columns:1fr;height:calc(100dvh - 260px)}
 .chatx .ccv{display:none}.chatx.open .cl{display:none}.chatx.open .ccv{display:flex}.cback{display:grid;place-items:center}
 .np{right:12px!important;left:12px;width:auto}
 .mb{max-width:88%}.rvs{gap:16px}
 }
 @media(prefers-reduced-motion:reduce){.tt,.np,.bell.ring svg{animation:none}.tp{animation:none;display:none}}
+/* ===== Header baru, kartu konfirmasi, balas otomatis ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.topbar .crumb{margin:0;min-width:0;flex:1}.topbar #crumbName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbr{flex:none;display:flex;align-items:center;gap:4px;padding:4px 6px 4px 4px;background:#ffffffc4;backdrop-filter:blur(8px);border:1px solid #fff;border-radius:99px;box-shadow:var(--sh)}
+.tbr .sw{border:0;background:transparent;padding:4px 10px 4px 6px;font-size:13px}
+.top{margin-bottom:20px}
+.qa .qrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.qa h3{margin-bottom:0}
+.autorow{margin:10px 2px 0!important}
+.mb small{display:flex;justify-content:flex-end;align-items:center;gap:6px}
+.mdel{padding:0 2px;font-size:10px;opacity:.4;background:none;line-height:1}.mdel:hover{opacity:1}
+.mauto{display:block;font-style:normal;font-size:10px;font-weight:700;margin-bottom:3px;opacity:.85}
+.mb.c .mauto{color:var(--green)}
+.cdel{margin-left:auto;flex:none}
+.ask{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:#1a110a99;backdrop-filter:blur(4px);animation:askin .18s ease-out}
+.ask.out{opacity:0;transition:opacity .16s}
+@keyframes askin{from{opacity:0}}
+.askc{width:min(100%,360px);padding:28px 22px 20px;text-align:center;background:#fff;border-radius:26px;box-shadow:0 30px 80px #0006;animation:askc .26s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes askc{from{opacity:0;transform:translateY(16px) scale(.94)}}
+.aski{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;font-size:32px;background:#fde7e5;box-shadow:0 0 0 8px #fdf1f0}
+.aski.pri{background:#fff1dc;box-shadow:0 0 0 8px #fff8ec}
+.askc h3{margin:0 0 6px;font-size:19px;letter-spacing:-.4px}.askc p{margin:0;color:var(--mut);font-size:13.5px;line-height:1.55}
+.askp{margin:14px 0 0;padding:10px 14px;border-radius:14px;background:var(--bg);font-weight:700;font-size:13px;overflow-wrap:anywhere}
+.aska{display:flex;gap:10px;margin-top:22px}.aska .btn{flex:1;height:46px;border-radius:14px}
+.btn.dngf{background:linear-gradient(180deg,#e8645a,#c8443b);color:#fff;border-color:#c8443b;box-shadow:0 8px 18px #c8443b40}
+@media(max-width:860px){.topbar{margin-bottom:12px}}
 </style>
 <script>try{if(!localStorage.getItem("wk_ses_admin"))document.documentElement.classList.add("wk-lock")}catch(e){}</script>
 <link rel="stylesheet" href="warungku.css">
@@ -287,16 +312,14 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
 
 <div id="app" hidden>
   <main>
-    <div class="top">
-      <div><div class="crumb"><span class="mark">🍡</span><span id="crumbName">WARUNGKU</span></div><h2 id="ttl"></h2><p id="sub"></p></div>
-      <div class="tact">
-        <a class="btn" href="index.html" target="_blank" rel="noopener">↗ Lihat toko</a>
-        <label class="sw"><input type="checkbox" id="openSw"><span class="t"></span><span id="openTx"></span></label>
-        <button class="btn" data-go="data">⚙ Data</button>
-        <button class="btn" data-act="logout">Keluar</button>
+    <div class="topbar">
+      <div class="crumb"><span class="mark">🍡</span><span id="crumbName">WARUNGKU</span></div>
+      <div class="tbr">
+        <label class="sw" title="Buka / tutup toko"><input type="checkbox" id="openSw"><span class="t"></span><span id="openTx"></span></label>
         <button class="bell" id="bell" type="button" aria-label="Notifikasi" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bn" id="bellN" hidden>0</span></button>
       </div>
     </div>
+    <div class="top"><div><h2 id="ttl"></h2><p id="sub"></p></div></div>
 
     <section id="v-dash">
       <div class="stats" id="stats"></div>
@@ -323,6 +346,13 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
     </section>
 
     <section id="v-store" hidden>
+      <div class="card qa"><h3>Akses cepat</h3>
+        <div class="qrow">
+          <a class="btn" href="index.html" target="_blank" rel="noopener">↗ Lihat toko</a>
+          <button class="btn" data-go="data">⚙ Data &amp; cadangan</button>
+          <button class="btn dng" data-act="logout">⎋ Keluar</button>
+        </div>
+      </div>
       <form class="card" id="sform">
         <h3>Informasi toko</h3><p class="hint">Data ini dipakai di halaman toko. Pesanan pelanggan masuk otomatis ke panel ini.</p>
         <div class="grid2">
@@ -347,7 +377,7 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
     <section id="v-chat" hidden>
       <div class="chatx" id="chatx">
         <div class="card cl">
-          <div class="cth"><input id="cq" type="search" placeholder="Cari pelanggan atau pesan"></div>
+          <div class="cth"><input id="cq" type="search" placeholder="Cari pelanggan atau pesan"><label class="nrow autorow"><input type="checkbox" id="autoSw"> 🤖 Balas otomatis oleh AI</label></div>
           <div class="cthreads" id="cthreads"></div>
         </div>
         <div class="card ccv" id="cconv"></div>
@@ -473,7 +503,7 @@ async function unlock(){
   catch(e){$("lockErr").textContent=/invalid|wrong|user-not/.test(e.code||"")?"Email atau password salah.":"Gagal masuk: "+(e.code||e.message)}
   b.disabled=false;b.textContent="Masuk";
 }
-function enter(){if(!$("app").hidden)return;sig=KS();$("lock").hidden=true;$("app").hidden=false;load();initNotif();go(location.hash.slice(1)||"dash")}
+function enter(){if(!$("app").hidden)return;sig=KS();$("lock").hidden=true;$("app").hidden=false;load();syncSold();initNotif();go(location.hash.slice(1)||"dash")}
 
 /* Navigasi */
 const TT={dash:["Ringkasan","Gambaran toko hari ini."],orders:["Pesanan","Kelola dan perbarui status pesanan."],products:["Produk","Atur katalog, harga, dan stok."],store:["Pengaturan toko","Informasi yang dipakai di halaman toko."],data:["Data & keamanan","Cadangan, PIN, dan reset."],chat:["Obrolan","Balas pesan pelanggan, dibantu asisten AI."],reviews:["Ulasan","Penilaian pelanggan untuk setiap produk."]};
@@ -484,7 +514,7 @@ function go(v){
   $("ttl").textContent=TT[v][0];$("sub").textContent=TT[v][1];render();scrollTo(0,0);
 }
 function render(){
-  $("openSw").checked=S.isOpen;$("openTx").textContent=S.isOpen?"Toko buka":"Toko tutup";
+  $("openSw").checked=S.isOpen;$("openTx").textContent=S.isOpen?"Buka":"Tutup";
   const pend=O.filter(o=>(o.status||STAT[0])===STAT[0]).length;
   document.querySelectorAll("[data-pend]").forEach(e=>{e.hidden=!pend;e.textContent=pend});
   ({dash:rDash,orders:rOrders,products:rProducts,store:rStore,data:()=>{},chat:rChat,reviews:rReviews})[view]();
@@ -709,6 +739,7 @@ function threads(){
     const cm=t.msgs.filter(x=>x.from==="customer");t.cust=cm.length;t.lastCust=cm[cm.length-1]||null;
     const lo=lastOrderOf(t.cid);
     t.name=(t.lastCust&&t.lastCust.name)||(lo&&lo.name)||"Pelanggan";t.phone=(t.lastCust&&t.lastCust.phone)||(lo&&lo.phone)||"";
+    if((CS[t.cid]||0)>t.cust)CS[t.cid]=t.cust;
     t.unread=Math.max(0,t.cust-(CS[t.cid]||0));
   }
   return out.sort((a,b)=>b.last.t-a.last.t);
@@ -869,6 +900,7 @@ function detectEvents(bO,bR,bC){
   R.filter(r=>!bR.has(r.id)&&now-r.t<7*day).forEach(r=>ev.push({type:"review",r}));
   const th=threads();
   th.forEach(t=>{if(t.cust>(bC[t.cid]||0)&&t.lastCust&&now-t.lastCust.t<day){
+    scheduleAuto(t);
     if(view==="chat"&&acid===t.cid&&!document.hidden){CS[t.cid]=t.cust;saveCS()}else ev.push({type:"chat",t});
   }});
   knownR=new Set(R.map(r=>r.id));knownC=Object.fromEntries(th.map(t=>[t.cid,t.cust]));
@@ -887,6 +919,7 @@ function openThread(cid){
   setTimeout(()=>{const i=$("cin");i&&i.focus({preventScroll:true})},80);
 }
 function rChat(){
+  $("autoSw").checked=getPref("autoreply",true);
   const q=($("cq").value||"").trim().toLowerCase(),T=threads();
   const F=T.filter(t=>!q||(t.name+" "+t.phone+" "+t.last.text).toLowerCase().includes(q));
   $("cthreads").innerHTML=F.length?F.map(t=>`<button type="button" class="ct ${t.cid===acid?"on":""}" data-thread="${esc(t.cid)}"><span class="av">${esc(init(t.name))}</span><span class="ctb"><b>${esc(t.name)}</b><small>${t.last.from==="admin"?"Anda: ":""}${esc(t.last.text)}</small></span><span class="ctm"><em>${ago(t.last.t)}</em>${t.unread?`<i class="cu">${t.unread}</i>`:""}</span></button>`).join(""):empty("💬","Belum ada obrolan","Pesan dari pelanggan akan muncul di sini.");
@@ -896,7 +929,7 @@ function rChat(){
   const th=T.find(t=>t.cid===acid)||ghost(acid);
   if(cv.dataset.cid!==acid){
     cv.dataset.cid=acid;
-    cv.innerHTML=`<div class="cvh"><button type="button" class="cback" data-cback aria-label="Kembali ke daftar">‹</button><span class="av lg">${esc(init(th.name))}</span><div class="cvt"><b>${esc(th.name)}</b><small id="cvsub"></small></div></div>
+    cv.innerHTML=`<div class="cvh"><button type="button" class="cback" data-cback aria-label="Kembali ke daftar">‹</button><span class="av lg">${esc(init(th.name))}</span><div class="cvt"><b>${esc(th.name)}</b><small id="cvsub"></small></div><button type="button" class="btn sm dng cdel" data-cdel>🗑 Hapus</button></div>
       <div id="aiHolder"></div><div class="cmsgs" id="cmsgs"></div>
       <div class="cqr">${QR.map((x,i)=>`<button type="button" data-qr="${i}">${esc(x.replace(/ [🙏✅🍳🛵😊]+$/u,""))}</button>`).join("")}</div>
       <form class="cin" id="cform"><textarea id="cin" rows="1" maxlength="1000" placeholder="Tulis balasan…" aria-label="Balasan"></textarea><button class="btn pri" type="submit">Kirim ➤</button></form>`;
@@ -910,14 +943,18 @@ function paintConv(th){
   const box=$("cmsgs"),near=box.scrollHeight-box.scrollTop-box.clientHeight<90||!box.dataset.painted;
   let day="",h="";
   for(const m of th.msgs){const d=dayL(m.t);if(d!==day){day=d;h+=`<div class="mday">${esc(d)}</div>`}
-    h+=`<div class="mb ${m.from==="admin"?"a":"c"}">${esc(m.text).replace(/\n/g,"<br>")}<small>${hm(m.t)}</small></div>`}
+    h+=`<div class="mb ${m.from==="admin"?"a":"c"}">${m.auto?'<em class="mauto">🤖 Balasan otomatis</em>':""}${esc(m.text).replace(/\n/g,"<br>")}<small>${hm(m.t)}<button type="button" class="mdel" data-mdel="${esc(m.id)}" aria-label="Hapus pesan">🗑</button></small></div>`}
   box.innerHTML=h||'<div class="mday">Belum ada pesan. Kirim sapaan pertama 👋</div>';
   box.dataset.painted="1";if(near)box.scrollTop=box.scrollHeight;
   if(th.unread>0){CS[th.cid]=th.cust;saveCS();updateBell()}
 }
-function sendAdmin(cid,text){
+const loadC=()=>{const c=rd(K.c,[]);C=Array.isArray(c)?c.filter(x=>x&&x.id&&x.cid):[]};
+function sendAdmin(cid,text,extra){
   text=String(text||"").trim().slice(0,1000);if(!cid||!text)return false;
-  C.push({id:"M"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),cid,from:"admin",name:S.shopName,text,t:Date.now()});
+  loadC();
+  const id=(extra&&extra.id)||"M"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  if(C.some(x=>x.id===id))return false;
+  C.push({...(extra||{}),id,cid,from:"admin",name:S.shopName,text,t:Date.now()});
   if(!wr(K.c,C))return false;
   if(view==="chat")rChat();updateBell();return true;
 }
@@ -948,6 +985,45 @@ function rReviews(){
     <div class="rvact"><button class="btn sm" data-rvreply="${esc(r.id)}">${r.reply?"Ubah balasan":"Balas"}</button><button class="btn sm dng" data-rvdel="${esc(r.id)}">Hapus</button></div></article>`).join(""):empty("⭐","Belum ada ulasan","Ulasan muncul setelah pelanggan menilai pesanan yang selesai.");
 }
 
+/* ---------- Balasan otomatis AI & kartu konfirmasi ---------- */
+const ARK="wk_adm_auto";let arDone=new Set(rd(ARK,[])||[]),arTimers={};
+function autoText(th,it){
+  const nm=nm1(th.name);
+  if(it.k==="complaint")return`Mohon maaf atas ketidaknyamanannya kak ${nm} 🙏 Keluhan kakak sudah kami terima dan segera kami cek. Admin akan menghubungi kakak sebentar lagi.`;
+  if(it.k==="cancel")return`Baik kak ${nm}, permintaan pembatalan kakak sudah kami terima. Admin akan memeriksa status pesanannya dan segera mengonfirmasi 🙏`;
+  if(it.k==="change")return`Baik kak ${nm}, permintaan perubahan kakak sudah kami catat. Admin akan segera mengonfirmasi apakah masih bisa diubah 🙏`;
+  if(it.k==="other")return`Halo kak ${nm}, terima kasih sudah menghubungi ${S.shopName} 🙏 Pesan kakak sudah kami terima dan admin akan segera membalas.`;
+  return aiReplies(th,it)[0];
+}
+function scheduleAuto(t){
+  if(!getPref("autoreply",true)||!t.lastCust||t.last.from!=="customer")return;
+  const m=t.lastCust;if(arDone.has(m.id)||Date.now()-m.t>6e5)return;
+  arDone.add(m.id);const a=[...arDone].slice(-200);arDone=new Set(a);try{localStorage.setItem(ARK,JSON.stringify(a))}catch(e){}
+  clearTimeout(arTimers[t.cid]);
+  arTimers[t.cid]=setTimeout(()=>{
+    const th=threads().find(x=>x.cid===t.cid);
+    if(!th||th.last.id!==m.id||!getPref("autoreply",true))return; // admin sudah membalas sendiri / ada pesan baru
+    sendAdmin(t.cid,autoText(th,intent(m.text)),{auto:true,id:"A"+m.id});
+  },2200);
+}
+function askCard(o){
+  return new Promise(res=>{
+    const w=document.createElement("div"),prev=document.activeElement;
+    w.className="ask";w.setAttribute("role","alertdialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label",o.title);
+    w.innerHTML=`<div class="askc"><div class="aski ${o.tone||""}" aria-hidden="true">${esc(o.icon||"🗑")}</div><h3>${esc(o.title)}</h3><p>${esc(o.text||"")}</p>${o.preview?`<div class="askp">${esc(o.preview)}</div>`:""}<div class="aska"><button type="button" class="btn" data-x="0">Batal</button><button type="button" class="btn ${o.tone==="pri"?"pri":"dngf"}" data-x="1">${esc(o.ok||"Ya, hapus")}</button></div></div>`;
+    const key=e=>{if(e.key==="Escape"){e.stopPropagation();done(false)}};
+    const done=v=>{document.removeEventListener("keydown",key,true);w.classList.add("out");setTimeout(()=>{w.remove();prev&&prev.focus&&prev.focus({preventScroll:true})},170);res(v)};
+    w.addEventListener("click",e=>{if(e.target===w)return done(false);const b=e.target.closest("[data-x]");if(b)done(b.dataset.x==="1")});
+    document.addEventListener("keydown",key,true);
+    document.body.appendChild(w);w.querySelector('[data-x="0"]').focus();
+  });
+}
+function syncSold(){
+  const m={};O.forEach(o=>{if((o.status||"")===STAT[4])(o.items||[]).forEach(i=>{m[i.id]=(m[i.id]||0)+(+i.qty||0)})});
+  let ch=false;P.forEach(p=>{const n=m[p.id]||0;if(n>(+p.sold||0)){p.sold=n;ch=true}});
+  if(ch&&saveP())sig=KS();
+}
+
 /* ---------- Penanganan klik antarmuka baru ---------- */
 function uiClick(t){
   const d=t.dataset;
@@ -964,11 +1040,19 @@ function uiClick(t){
   if(d.chato){const o=O.find(x=>x.id===d.chato);if(o){go("chat");openThread(o.uid||o.cid)}return true}
   if(d.aisend){const o=O.find(x=>x.id===d.aisend),cid=o&&(o.uid||o.cid);
     if(o&&cid&&sendAdmin(cid,analyzeOrder(o).reply))notify({type:"ok",title:"Balasan terkirim",text:"Masuk ke obrolan "+(o.name||"pelanggan"),action:{label:"Buka obrolan",fn(){go("chat");openThread(cid)}}});return true}
+  if(d.cdel!==undefined){const th=threads().find(x=>x.cid===acid)||ghost(acid),cid=acid;
+    askCard({icon:"🗑",title:"Hapus obrolan ini?",text:`Seluruh pesan dengan ${th.name} akan dihapus, juga dari sisi pelanggan.`,preview:`${th.msgs.length} pesan`,ok:"Ya, hapus"}).then(ok=>{
+      if(!ok)return;loadC();C=C.filter(x=>x.cid!==cid);wr(K.c,C);delete CS[cid];saveCS();acid=null;$("cconv").dataset.cid="";rChat();updateBell();toast("Obrolan dihapus.")});return true}
+  if(d.mdel){const id=d.mdel,m=C.find(x=>x.id===id);
+    askCard({icon:"🗑",title:"Hapus pesan ini?",text:"Pesan juga akan hilang dari sisi pelanggan.",preview:m?m.text.slice(0,90):"",ok:"Ya, hapus"}).then(ok=>{
+      if(!ok)return;loadC();C=C.filter(x=>x.id!==id);wr(K.c,C);rChat();updateBell();toast("Pesan dihapus.")});return true}
   if(d.rvf!==undefined){rvf=+d.rvf;rReviews();return true}
   if(d.rvreply){const f=$("rf-"+d.rvreply);if(f){f.hidden=!f.hidden;if(!f.hidden)$("rr-"+d.rvreply).focus()}return true}
   if(d.rvsend){const r=R.find(x=>x.id===d.rvsend),v=$("rr-"+d.rvsend).value.trim().slice(0,500);
     if(r){if(v){r.reply=v;r.replyT=Date.now()}else{delete r.reply;delete r.replyT}wr(K.r,R);toast(v?"Balasan terkirim.":"Balasan dihapus.");rReviews()}return true}
-  if(d.rvdel){if(confirm("Hapus ulasan ini? Tindakan ini tidak dapat dibatalkan.")){R=R.filter(x=>x.id!==d.rvdel);wr(K.r,R);toast("Ulasan dihapus.");render()}return true}
+  if(d.rvdel){const r=R.find(x=>x.id===d.rvdel);
+    askCard({icon:"⭐",title:"Hapus ulasan ini?",text:"Ulasan akan hilang dari halaman produk dan tidak dapat dikembalikan.",preview:r?`${r.name||"Pelanggan"} · ${"★".repeat(+r.rating||0)}${r.text?" · "+r.text.slice(0,60):""}`:"",ok:"Ya, hapus"}).then(ok=>{
+      if(!ok)return;R=R.filter(x=>x.id!==d.rvdel);wr(K.r,R);toast("Ulasan dihapus.");render()});return true}
   return false;
 }
 
@@ -981,8 +1065,8 @@ document.addEventListener("click",async e=>{
   if(t.dataset.share){const id=t.dataset.share;return wOrder===id?stopShare():startShare(id)}
   if(t.dataset.f){ofil=t.dataset.f;return rOrders()}
   if(t.dataset.edit)return openP(t.dataset.edit);
-  if(t.dataset.delp){const p=P.find(x=>x.id===t.dataset.delp);if(p&&confirm(`Hapus "${p.name}" dari katalog?`)){P=P.filter(x=>x!==p);saveP();toast("Produk dihapus.");render()}return}
-  if(t.dataset.delo){if(confirm("Hapus pesanan ini dari riwayat?")){O=O.filter(o=>o.id!==t.dataset.delo);saveO();toast("Pesanan dihapus.");render()}return}
+  if(t.dataset.delp){const p=P.find(x=>x.id===t.dataset.delp);if(p&&await askCard({icon:p.emoji||"🍽️",title:"Hapus produk ini?",text:"Produk akan hilang dari katalog dan halaman toko. Tindakan ini tidak dapat dibatalkan.",preview:p.name+" · "+rp(p.price),ok:"Ya, hapus"})){P=P.filter(x=>x.id!==p.id);saveP();toast("Produk dihapus.");render()}return}
+  if(t.dataset.delo){const o=O.find(x=>x.id===t.dataset.delo);if(o&&await askCard({icon:"🧾",title:"Hapus pesanan ini?",text:"Pesanan dihapus dari riwayat panel ini.",preview:(o.name||"Pelanggan")+" · "+o.id+" · "+rp(o.total),ok:"Ya, hapus"})){O=O.filter(x=>x.id!==o.id);saveO();toast("Pesanan dihapus.");render()}return}
   const a=t.dataset.act;if(!a)return;
   if(a==="newp")openP();
   if(a==="close")$("dlg").close();
@@ -993,7 +1077,7 @@ document.addEventListener("click",async e=>{
   if(a==="imp")$("impf").click();
   if(a==="chpin"){const p=$("np1").value;if(!/^\d{4,12}$/.test(p))return toast("PIN harus 4–12 angka.");if(p!==$("np2").value)return toast("Kedua PIN belum sama.");
     localStorage.setItem(K.pin,await hash(p));$("np1").value=$("np2").value="";toast("PIN diganti.")}
-  if(a==="reset"&&confirm("Reset produk, pengaturan, dan pesanan ke data awal? Tindakan ini tidak dapat dibatalkan.")){[K.p,K.s,K.o].forEach(k=>localStorage.removeItem(k));load();saveP();saveS();saveO();render();toast("Data dikembalikan ke awal.")}
+  if(a==="reset"&&await askCard({icon:"⚠️",title:"Reset semua data?",text:"Produk, pengaturan, dan pesanan dikembalikan ke data awal. Tindakan ini tidak dapat dibatalkan.",ok:"Ya, reset"})){[K.p,K.s,K.o].forEach(k=>localStorage.removeItem(k));load();saveP();saveS();saveO();render();toast("Data dikembalikan ke awal.")}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
@@ -1002,6 +1086,7 @@ document.addEventListener("change",e=>{
   if(t.dataset.stock){const p=P.find(x=>x.id===t.dataset.stock);if(p){p.available=t.checked;saveP();toast(p.available?"Produk tersedia.":"Produk ditandai habis.");render()}}
   if(t.id==="pc")rProducts();
   if(t.id==="rvp")rReviews();
+  if(t.id==="autoSw"){setPref("autoreply",t.checked);toast(t.checked?"Balasan otomatis AI aktif.":"Balasan otomatis AI dimatikan.","info")}
   if(t.id==="npSound")setPref("sound",t.checked);
   if(t.id==="npSpeak"){setPref("speak",t.checked);if(t.checked)say("Asisten AI aktif. Pesanan dan pesan masuk akan dibacakan.")}
 });
@@ -1013,7 +1098,7 @@ function sync(){
   if($("app").hidden)return;
   const ns=KS();if(ns===sig)return;sig=ns;
   const bO=seen,bR=knownR,bC=knownC;
-  load();detectEvents(bO,bR,bC);
+  load();syncSold();detectEvents(bO,bR,bC);
   const ae=document.activeElement;
   if(view==="reviews"&&ae&&ae.closest&&ae.closest("#v-reviews")&&/TEXTAREA|INPUT|SELECT/.test(ae.tagName))updateBell();
   else render();
