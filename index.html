@@ -1181,6 +1181,27 @@ h1,h2,h3{letter-spacing:-.4px}
 .star-pick button.on{color:#f5a623;transform:scale(1.05)}.star-pick span{margin-left:8px;font-size:12px;font-weight:800;color:var(--green-dark)}
 .rv-form textarea{width:100%;min-height:68px;margin-top:10px;padding:11px;border:1px solid #dfe5dc;border-radius:12px;background:#fffaf3;font:inherit}
 .rv-done{display:inline-flex;align-items:center;padding:10px 12px;border-radius:14px;background:#f1faf3;color:#2f9e5b;font-size:11px;font-weight:800}
+/* ===== Kartu produk: ulasan & terjual ===== */
+.product-card{display:flex;flex-direction:column;border-radius:22px}
+.product-image{aspect-ratio:1.2/1}
+.product-info{display:flex;flex-direction:column;flex:1;padding:12px 12px 13px}
+.product-name{margin:0 0 5px;font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.product-meta{display:flex;align-items:center;flex-wrap:wrap;gap:3px 7px;margin-bottom:7px;min-height:17px;font-size:11px;color:var(--muted)}
+.pm-r{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.pm-star{color:#f5a623;font-size:13px;line-height:1}.pm-r b{color:var(--ink);font-weight:800}.pm-r em{font-style:normal}
+.pm-new{font-size:10.5px}
+.pm-dot{width:3px;height:3px;border-radius:50%;background:#cbc3b3}
+.pm-s{font-weight:700;color:#6f7d73;white-space:nowrap}
+.product-desc{min-height:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 11px;font-size:11px;line-height:1.5}
+.product-bottom{margin-top:auto;padding-top:11px;border-top:1px dashed #efe6d6;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.product-price{font-size:15px;white-space:nowrap}
+.add-btn{min-height:36px;padding:0 13px;border-radius:13px;background:linear-gradient(180deg,#f7a43c,#e07b0f);box-shadow:0 6px 12px #e07b0f33;white-space:nowrap}
+.product-card.is-out .product-image img,.product-card.is-out .food-fallback{filter:grayscale(.85);opacity:.65}
+.product-card.is-out .product-price{color:var(--muted)}
+.sold-out{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:7px 16px;border-radius:99px;background:#1a110ad9;color:#fff;font-size:12px;font-weight:800;letter-spacing:.4px}
+.detail-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:4px 0 8px;font-size:12px}.detail-meta .rate-badge{margin:0}
+.cb-auto{display:block;font-style:normal;font-size:10px;font-weight:700;margin-bottom:2px;color:var(--green-dark)}
+@media(max-width:360px){.product-price{font-size:13px}.add-btn{padding:0 10px;font-size:11px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <script>try{if(!localStorage.getItem("wk_ses_customer"))document.documentElement.classList.add("wk-lock")}catch(e){}</script>
@@ -1678,7 +1699,8 @@ function normalizeProducts(value) {
     description:String(p.description || ""),
     variations:Array.isArray(p.variations) ? p.variations.map(String) : [],
     available:p.available !== false,
-    badge:String(p.badge || "")
+    badge:String(p.badge || ""),
+    sold:Math.max(0, Number(p.sold) || 0)
   }));
 }
 
@@ -1971,24 +1993,24 @@ function renderProducts(targetId, list) {
     const favorite = favorites.includes(p.id);
     const qty = cart.filter(x => x.id === p.id).reduce((sum,x) => sum+x.qty,0);
     return `
-      <article class="product-card" style="animation-delay:${Math.min(index,8)*25}ms">
+      <article class="product-card ${p.available ? "" : "is-out"}" style="animation-delay:${Math.min(index,8)*25}ms">
         <div class="product-image" onclick="openProduct('${p.id}')" role="button" tabindex="0"
           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProduct('${p.id}')}">
           ${safeImageURL(p.image)
             ? imageMarkup(p)
             : `<div class="food-fallback">${escapeHTML(p.emoji)}</div>`}
           ${p.badge ? `<span class="product-label">${escapeHTML(p.badge)}</span>` : ""}
+          ${p.available ? "" : '<span class="sold-out">Habis</span>'}
           <button class="favorite-btn ${favorite ? "active" : ""}"
             aria-label="${favorite ? "Hapus dari" : "Tambah ke"} favorit"
             onclick="event.stopPropagation();toggleFavorite('${p.id}')">${favorite ? "♥" : "♡"}</button>
         </div>
         <div class="product-info">
           <h3 class="product-name" onclick="openProduct('${p.id}')">${escapeHTML(p.name)}</h3>
-          ${ratingBadge(p.id)}
+          ${productMeta(p)}
           <p class="product-desc">${escapeHTML(p.description)}</p>
-          <div class="product-price">${money(p.price)}</div>
           <div class="product-bottom">
-            <span class="stock-label ${p.available ? "" : "out"}">${p.available ? "● Tersedia" : "Habis"}</span>
+            <div class="product-price">${money(p.price)}</div>
             <button class="add-btn" ${!p.available ? "disabled" : ""}
               onclick="quickAdd('${p.id}')">${qty ? "+" : "+ Tambah"}</button>
           </div>
@@ -2114,7 +2136,7 @@ function renderProductDetail() {
       ${url ? imageMarkup(p) : `<span>${escapeHTML(p.emoji)}</span>`}
     </div>
     <h2 class="detail-title">${escapeHTML(p.name)}</h2>
-    ${ratingBadge(p.id)}
+    <div class="detail-meta">${ratingBadge(p.id)}${p.sold ? `<span class="pm-s">Terjual ${fmtSold(p.sold)}</span>` : ""}</div>
     <div class="detail-price">${money(p.price)}</div>
     <p class="detail-description">${escapeHTML(p.description)}</p>
     ${variations}
@@ -3073,7 +3095,7 @@ function renderChat(scroll) {
     for (const m of list) {
       const d = dayLabel(m.t);
       if (d !== day) { day = d; html += `<div class="chat-day"><span>${escapeHTML(d)}</span></div>`; }
-      html += `<div class="cb ${m.from === "customer" ? "me" : "sh"}"><div>${escapeHTML(m.text).replace(/\n/g, "<br>")}</div><small>${hhmm(m.t)}</small></div>`;
+      html += `<div class="cb ${m.from === "customer" ? "me" : "sh"}">${m.auto ? '<em class="cb-auto">🤖 Balasan otomatis</em>' : ""}<div>${escapeHTML(m.text).replace(/\n/g, "<br>")}</div><small>${hhmm(m.t)}</small></div>`;
     }
     box.innerHTML = html;
   }
@@ -3129,6 +3151,8 @@ function onChatsChanged() {
   chats = readStorage(STORAGE.chats, []);
   if (!Array.isArray(chats)) chats = [];
   const n = adminCount();
+  const cidNow = myCid();
+  if (cidNow) { const sm = chatSeenMap(); if ((Number(sm[cidNow]) || 0) > n) { sm[cidNow] = n; writeStorage(CHAT_SEEN, sm); } }
   if (chatOpen) { markChatSeen(); renderChat(false); }
   else {
     updateChatBadge();
@@ -3163,6 +3187,14 @@ function initChat() {
 
 /* ---------- Ulasan ---------- */
 let rvExpanded = "";
+const fmtSold = n => n >= 1000 ? (Math.floor(n / 100) / 10).toString().replace(".", ",") + "rb" : String(n);
+function productMeta(p) {
+  const r = ratingOf(p.id), sold = Number(p.sold) || 0;
+  const rate = r.count
+    ? `<span class="pm-r" aria-label="Rating ${r.avg.toFixed(1)} dari 5, ${r.count} ulasan"><span class="pm-star">★</span><b>${r.avg.toFixed(1).replace(".", ",")}</b><em>(${r.count})</em></span>`
+    : '<span class="pm-r pm-new">Belum ada ulasan</span>';
+  return `<div class="product-meta">${rate}${sold ? `<span class="pm-dot"></span><span class="pm-s">Terjual ${fmtSold(sold)}</span>` : ""}</div>`;
+}
 function ratingOf(pid) {
   const l = reviews.filter(r => r && r.pid === pid && Number(r.rating) > 0);
   if (!l.length) return {avg:0, count:0};
