@@ -26,7 +26,7 @@ if (firebaseConfig.apiKey.startsWith("ISI_")) {
 function start() {
   const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getDatabase(app);
   let applying = false, remote = new Map(), subscribed = false, offs = [];
-  let remoteChat = new Set(), remoteRev = new Map();
+  let remoteChat = new Map(), remoteRev = new Map();
   const warn = e => { console.warn(e); window.toast && window.toast("Gagal sinkron: " + (e.code || e.message)); };
 
   // Tulis hasil dari server ke cache lokal lalu beri tahu halaman
@@ -64,6 +64,11 @@ function start() {
         const mine = ADMIN ? m.from === "admin" : (m.from === "customer" && m.cid === u.uid);
         if (mine) set(ref(db, "chats/" + m.cid + "/" + m.id), m).catch(warn);
       }
+      // Admin menghapus pesan/obrolan: hapus juga di server
+      if (ADMIN) {
+        const ids = new Set(d.map(m => m && m.id));
+        for (const [id, cid] of remoteChat) if (!ids.has(id)) remove(ref(db, "chats/" + cid + "/" + id)).catch(warn);
+      }
     } else if (k === KEY.reviews && Array.isArray(d)) {
       const ids = new Set(d.map(r => r && r.id));
       for (const r of d) {
@@ -92,8 +97,8 @@ function start() {
     // Obrolan: admin membaca semua percakapan, pelanggan hanya percakapannya sendiri
     offs.push(onValue(ADMIN ? ref(db, "chats") : ref(db, "chats/" + u.uid), s => {
       const arr = [];
-      remoteChat = new Set();
-      const add = c => { const v = c.val(); if (v && v.id) { remoteChat.add(v.id); arr.push(v); } };
+      remoteChat = new Map();
+      const add = c => { const v = c.val(); if (v && v.id) { remoteChat.set(v.id, v.cid || c.ref.parent.key); arr.push(v); } };
       if (ADMIN) s.forEach(th => { th.forEach(add); }); else s.forEach(add);
       try { for (const m of JSON.parse(localStorage.getItem(KEY.chats) || "[]"))
         if (m && !remoteChat.has(m.id) && Date.now() - m.t < 12e4 && m.from === (ADMIN ? "admin" : "customer")) arr.push(m); } catch (e) {}
@@ -123,7 +128,7 @@ function start() {
       apply(KEY.orders, arr);
     }, warn));
   }
-  const unlisten = () => { offs.forEach(f => f()); offs = []; subscribed = false; remote = new Map(); remoteChat = new Set(); remoteRev = new Map(); };
+  const unlisten = () => { offs.forEach(f => f()); offs = []; subscribed = false; remote = new Map(); remoteChat = new Map(); remoteRev = new Map(); };
 
   onAuthStateChanged(auth, u => {
     if (ADMIN) {
