@@ -8,6 +8,8 @@
 <meta name="description" content="WARUNGKU — Jajanan Kampung Pesan jajanan favorit kampung dengan mudah.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <title>WARUNGKU — Jajanan Kampung</title>
 
 <style>
@@ -1055,6 +1057,130 @@ h1,h2,h3{letter-spacing:-.4px}
 .option-pill.active{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 8px 16px #e07b0f38}
 .detail-footer{margin-top:22px;gap:14px}
 .toast{border-radius:14px;box-shadow:0 14px 34px #0c3b2a40}
+/* ===== Lokasi, peta & pelacakan ===== */
+.app-header{position:relative;z-index:35}
+.loc-wrap{padding:0 0 16px}
+.loc-card{background:#fff;border:1px solid #f0e3d0;border-radius:24px;padding:12px;box-shadow:0 1px 2px #50280a0d,0 14px 30px #78460a14}
+.loc-search{position:relative;display:flex;align-items:center;gap:10px;height:50px;padding:0 12px 0 15px;border:1.5px solid #eadfce;border-radius:16px;background:#fffaf3;transition:.15s}
+.loc-search:focus-within{border-color:var(--green);background:#fff;box-shadow:0 0 0 4px #e07b0f1f}
+.loc-search input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:14px}
+.loc-search input::-webkit-search-cancel-button{display:none}
+.loc-ico{font-size:16px;opacity:.65}
+.loc-x{width:26px;height:26px;padding:0;border-radius:50%;background:#efe5d6;color:#7a6b5c;font-size:12px;display:grid;place-items:center}
+.loc-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.loc-btn{display:flex;align-items:center;justify-content:center;gap:7px;min-height:46px;padding:8px 10px;border-radius:15px;font-size:12px;font-weight:800;line-height:1.25;color:#fff;background:linear-gradient(180deg,#f7a43c,#e07b0f);box-shadow:0 8px 16px #e07b0f33;transition:.15s}
+.loc-btn.alt{background:#fff;color:var(--green-dark);border:1.5px solid #f2d3a6;box-shadow:none}
+.loc-btn span{font-size:17px;line-height:1}
+.loc-cur{display:flex;align-items:center;gap:11px;margin-top:10px;padding:11px 13px;border-radius:16px;background:#fff7ea;border:1px dashed #f2d3a6}
+.loc-cur.on{background:#f1faf3;border:1px solid #cfe9d4}
+.loc-cur .dot{color:#2f9e5b;font-size:11px}
+.loc-cur>div{flex:1;min-width:0}
+.lc-t{display:block;font-size:11px;font-weight:800;color:var(--ink)}
+.lc-a{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;color:var(--muted);line-height:1.45;overflow-wrap:anywhere}
+.loc-cur button{background:transparent;color:var(--green);font-weight:800;font-size:12px;padding:6px 2px;white-space:nowrap}
+.loc-results{position:absolute;left:-1.5px;right:-1.5px;top:calc(100% + 8px);z-index:60;max-height:min(310px,52vh);overflow-y:auto;padding:6px;text-align:left;background:#fff;border:1px solid #eadfce;border-radius:18px;box-shadow:0 20px 44px #50280a33}
+.loc-item{display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px;border-radius:13px;background:transparent;text-align:left}
+.loc-item:hover,.loc-item:focus-visible{background:#fff4e2}
+.loc-item .pi{font-size:16px;margin-top:1px}
+.loc-item b{display:block;font-size:13px;color:var(--ink)}
+.loc-item small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;color:var(--muted);line-height:1.45}
+.loc-note{padding:14px;font-size:12px;color:var(--muted);text-align:center}
+/* Pemilih peta layar penuh */
+.mp{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:#fbf7f1}
+.mp-stage{position:relative;flex:1;min-height:0;isolation:isolate}
+.mp-map{position:absolute;inset:0;font:inherit}
+.mp-top{position:absolute;z-index:1000;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));display:flex;gap:10px;align-items:flex-start}
+.mp-back{flex:none;width:50px;height:50px;border-radius:16px;background:#fff;color:var(--ink);font-size:28px;line-height:1;box-shadow:0 8px 24px #2b160538}
+.mp-search{flex:1;min-width:0;position:relative}
+.mp-search .loc-search{background:#fff;border-color:#fff;box-shadow:0 8px 24px #2b160538}
+.mp-pin{position:absolute;z-index:900;left:50%;top:50%;width:44px;height:56px;margin:-56px 0 0 -22px;pointer-events:none;transform-origin:50% 100%;transition:transform .18s;filter:drop-shadow(0 6px 5px #0004)}
+.mp-dot{position:absolute;z-index:899;left:50%;top:50%;width:12px;height:6px;margin:-3px 0 0 -6px;border-radius:50%;background:#0003;pointer-events:none}
+.mp-stage.moving .mp-pin{transform:translateY(-12px) scale(1.05)}
+.mp-fab{position:absolute;z-index:1000;right:14px;bottom:38px;width:50px;height:50px;border-radius:50%;background:#fff;color:var(--green);font-size:24px;box-shadow:0 8px 24px #2b160540}
+.mp-fab.spin{animation:wkspin 1s linear infinite}
+@keyframes wkspin{to{transform:rotate(360deg)}}
+.mp-sheet{position:relative;z-index:2;margin-top:-24px;padding:20px 18px calc(18px + env(safe-area-inset-bottom));background:#fff;border-radius:28px 28px 0 0;box-shadow:0 -14px 40px #2b160524}
+.mp-lbl{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--green)}
+.mp-addr{margin:6px 0 4px;font-size:16px;font-weight:800;line-height:1.4;letter-spacing:-.25px;overflow-wrap:anywhere}
+.mp-coord{margin-bottom:14px;font-size:11px;color:var(--muted)}
+.mp-sheet .btn-green{margin-top:0}
+/* Penanda peta */
+.wk-mk{background:none;border:0}
+.wk-mk .mk{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:#fff;border:3px solid var(--green);font-size:19px;box-shadow:0 6px 14px #2b16053d}
+.wk-mk .mk::after{content:"";position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);border:6px solid transparent;border-top:8px solid var(--green);border-bottom:0}
+.wk-mk.cust .mk{border-color:#d84b42}.wk-mk.cust .mk::after{border-top-color:#d84b42}
+.wk-mk.cour .mk{border-color:#2b6cb0;animation:wkpulse 1.8s ease-out infinite}.wk-mk.cour .mk::after{border-top-color:#2b6cb0}
+@keyframes wkpulse{0%{box-shadow:0 0 0 0 #2b6cb066,0 6px 14px #2b16053d}100%{box-shadow:0 0 0 16px #2b6cb000,0 6px 14px #2b16053d}}
+.leaflet-container{font-family:inherit}
+/* Peta di checkout */
+.mini-map{height:200px;margin-top:14px;border-radius:20px;overflow:hidden;isolation:isolate;border:1px solid var(--edge)}
+.route-info{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.route-info span{padding:6px 11px;border-radius:99px;background:#fff7ea;border:1px solid #f2d3a6;font-size:11px;font-weight:800;color:var(--green-dark)}
+.sub-h{margin:16px 0 0}
+/* Pelacakan */
+.trk-map{height:310px;border-radius:22px;overflow:hidden;isolation:isolate;border:1px solid var(--edge)}
+.trk-live{margin:12px 0 0;font-size:12px;font-weight:700;color:var(--muted)}
+.live-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;background:#e8f1fb;color:#2b6cb0;font-weight:800}
+.trk-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.trk-stats div{padding:11px 8px;text-align:center;background:#fff;border:1px solid var(--edge);border-radius:16px}
+.trk-stats span{display:block;font-size:10px;font-weight:700;color:var(--muted)}
+.trk-stats b{display:block;margin-top:3px;font-size:13px;overflow-wrap:anywhere}
+.trk-steps{list-style:none;margin:16px 0 0;padding:0}
+.trk-steps li{position:relative;padding:0 0 16px 32px;font-size:12px;font-weight:700;color:#a3a99f}
+.trk-steps li::before{content:"";position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid #ddd6c8}
+.trk-steps li::after{content:"";position:absolute;left:9px;top:22px;bottom:2px;width:2px;background:#e6dfd2}
+.trk-steps li:last-child{padding-bottom:0}.trk-steps li:last-child::after{display:none}
+.trk-steps li.done{color:var(--ink)}.trk-steps li.done::before{background:var(--green);border-color:var(--green);content:"✓";color:#fff;font-size:11px;display:grid;place-items:center}
+.trk-steps li.done::after{background:var(--green)}
+.trk-steps li.cur{color:var(--green-dark)}.trk-steps li.cur::before{border-color:var(--green);box-shadow:0 0 0 5px #e07b0f26}
+@media(max-width:360px){.loc-btn{font-size:11px}.loc-actions{gap:7px}}
+/* ===== Obrolan & ulasan ===== */
+.chat-fab{position:fixed;z-index:40;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:25px;color:#fff;background:linear-gradient(160deg,#f7a43c,#e07b0f);box-shadow:0 12px 26px #e07b0f55,0 0 0 4px #fff;transition:.18s}
+.chat-fab:active{transform:scale(.93)}
+.chat-fab.has{animation:cfpulse 1.8s ease-out infinite}
+@keyframes cfpulse{0%{box-shadow:0 12px 26px #e07b0f55,0 0 0 4px #fff,0 0 0 4px #e07b0f88}100%{box-shadow:0 12px 26px #e07b0f55,0 0 0 4px #fff,0 0 0 18px #e07b0f00}}
+.cf-badge{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#d84b42;color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;border:2px solid #fff}
+.chatp{position:fixed;z-index:75;top:0;left:50%;transform:translateX(-50%);width:min(100%,560px);height:100vh;height:100dvh;display:flex;flex-direction:column;background:#fbf7f1;box-shadow:0 0 70px #0007;animation:chatin .28s ease-out}
+@keyframes chatin{from{opacity:0;transform:translate(-50%,24px)}}
+.chatp-h{display:flex;align-items:center;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 14px 14px 8px;color:#fff;background:linear-gradient(135deg,#1a110a,#3a2210)}
+.chatp-back{width:40px;height:40px;border-radius:50%;background:#ffffff1c;color:#fff;font-size:28px;line-height:1}
+.chatp-av{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#fff;padding:2px}
+.chatp-t{display:grid;gap:2px;min-width:0}.chatp-t b{font-size:16px;letter-spacing:-.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chatp-t span{font-size:12px;color:#e9d8c3;display:flex;align-items:center;gap:6px}
+.chatp-t .dot{width:8px;height:8px;border-radius:50%;background:#9a9186}.chatp-t .dot.on{background:#3ddc84;box-shadow:0 0 0 3px #3ddc8433}
+.chatp-m{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.chat-day{display:flex;justify-content:center;margin:8px 0}.chat-day span{padding:4px 12px;border-radius:99px;background:#efe5d6;color:#7a6b5c;font-size:11px;font-weight:700}
+.cb{max-width:82%;padding:9px 13px 6px;border-radius:18px;font-size:14px;line-height:1.45;overflow-wrap:anywhere;animation:cbin .2s ease-out}
+@keyframes cbin{from{opacity:0;transform:translateY(6px)}}
+.cb small{display:block;margin-top:2px;font-size:10px;opacity:.65;text-align:right}
+.cb.me{align-self:flex-end;color:#fff;background:linear-gradient(160deg,#f5a03a,#e07b0f);border-bottom-right-radius:6px}
+.cb.sh{align-self:flex-start;background:#fff;border:1px solid #f0e3d0;border-bottom-left-radius:6px;box-shadow:0 1px 2px #50280a0d}
+.chat-empty{margin:auto;text-align:center;padding:24px;color:var(--muted)}.chat-empty div{font-size:46px}.chat-empty h3{margin:8px 0 4px;color:var(--ink);font-size:17px}.chat-empty p{margin:0;font-size:13px;line-height:1.5}
+.chatp-q{display:flex;gap:8px;overflow-x:auto;padding:8px 14px;scrollbar-width:none}.chatp-q::-webkit-scrollbar{display:none}
+.chatp-q button{flex:none;padding:8px 13px;border-radius:99px;background:#fff;border:1px solid #f2d3a6;color:var(--green-dark);font-size:12px;font-weight:700}
+.chatp-c{display:flex;align-items:flex-end;gap:10px;padding:10px 12px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #f0e3d0}
+.chatp-c textarea{flex:1;min-height:46px;max-height:120px;resize:none;padding:12px 15px;border:1.5px solid #eadfce;border-radius:23px;background:#fffaf3;font:inherit;font-size:15px;color:var(--ink);line-height:1.35}
+.chatp-c textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 4px #e07b0f1f}
+.chatp-send{flex:none;width:46px;height:46px;border-radius:50%;color:#fff;font-size:18px;background:linear-gradient(160deg,#f5a03a,#e07b0f);box-shadow:0 8px 16px #e07b0f40}
+.stars{display:inline-block;font-size:13px;letter-spacing:1px;line-height:1;background:linear-gradient(90deg,#f5a623 var(--p,0%),#e4dccd var(--p,0%));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.rate-badge{display:flex;align-items:center;gap:5px;margin:2px 0 4px;font-size:12px}.rate-badge b{color:var(--ink)}.rate-badge span{color:var(--muted)}
+.rv-sum{display:flex;gap:18px;align-items:center;padding:14px;border-radius:18px;background:#fff7ea;border:1px solid #f2d3a6;margin-bottom:12px}
+.rv-big{text-align:center;min-width:76px}.rv-big strong{display:block;font-size:34px;letter-spacing:-1.5px;line-height:1}.rv-big small{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+.rv-bars{flex:1;display:grid;gap:4px}.rv-bar{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.rv-bar i{flex:1;height:6px;border-radius:9px;background:#eadfce;overflow:hidden}.rv-bar i b{display:block;height:100%;background:#f5a623;border-radius:9px}.rv-bar em{font-style:normal;width:18px;text-align:right}
+.rv-item{padding:13px 0;border-top:1px solid var(--line)}.rv-item:first-of-type{border-top:0}
+.rv-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.rv-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff;background:linear-gradient(145deg,#ffb347,#e07b0f)}
+.rv-head b{display:block;font-size:13px}.rv-head small{color:var(--muted);font-size:11px}
+.rv-text{margin:4px 0 0;font-size:13px;line-height:1.55;color:#3b3a36;overflow-wrap:anywhere}
+.rv-reply{margin-top:9px;padding:9px 12px;border-radius:12px;background:#f6f1e8;font-size:12px;line-height:1.5}.rv-reply b{display:block;color:var(--green-dark);font-size:11px;margin-bottom:2px}
+.rv-more{width:100%;margin-top:6px;padding:10px;border-radius:12px;background:#fff7ea;color:var(--green-dark);font-weight:800;font-size:12px}
+.rv-form{padding:14px;border:1px solid var(--line);border-radius:18px;margin-bottom:12px;background:#fff}
+.rv-form h4{margin:0 0 8px;font-size:14px}
+.star-pick{display:flex;gap:4px;align-items:center}.star-pick button{font-size:34px;line-height:1;color:#e4dccd;background:none;padding:0 2px;transition:.12s}
+.star-pick button.on{color:#f5a623;transform:scale(1.05)}.star-pick span{margin-left:8px;font-size:12px;font-weight:800;color:var(--green-dark)}
+.rv-form textarea{width:100%;min-height:68px;margin-top:10px;padding:11px;border:1px solid #dfe5dc;border-radius:12px;background:#fffaf3;font:inherit}
+.rv-done{display:inline-flex;align-items:center;padding:10px 12px;border-radius:14px;background:#f1faf3;color:#2f9e5b;font-size:11px;font-weight:800}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <script>try{if(!localStorage.getItem("wk_ses_customer"))document.documentElement.classList.add("wk-lock")}catch(e){}</script>
@@ -1083,14 +1209,7 @@ h1,h2,h3{letter-spacing:-.4px}
         </button>
       </div>
     </div>
-    <div class="location-bar">
-      <span aria-hidden="true">📍</span>
-      <div class="location-copy">
-        <strong>Lokasi pengantaran</strong>
-        <span id="headerAddress">Tambahkan alamat pengantaran</span>
-      </div>
-      <button onclick="navigate('profile')">Ubah ›</button>
-    </div>
+    <div class="loc-wrap"><div class="loc-card" data-locwidget="h"></div></div>
   </div>
 </header>
 
@@ -1218,17 +1337,16 @@ h1,h2,h3{letter-spacing:-.4px}
             <input id="profilePhone" type="tel" inputmode="tel"
               maxlength="20" placeholder="08xxxxxxxxxx">
           </div>
-          <div class="form-field">
-            <label for="profileAddress">Alamat pengantaran</label>
-            <textarea id="profileAddress" maxlength="500"
-              placeholder="Nama jalan, RT/RW, desa, kecamatan..."></textarea>
-          </div>
-          <div class="form-field">
-            <label for="profileLandmark">Patokan rumah / gang</label>
-            <input id="profileLandmark" maxlength="200" placeholder="Dekat masjid, gang nomor...">
-          </div>
           <button class="btn-green btn-block" type="submit">Simpan Profil</button>
         </form>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="panel">
+        <h3>📍 Lokasi pengantaran</h3>
+        <p class="small muted" style="margin:-8px 0 14px">Cari alamat, pakai lokasimu saat ini, atau tandai titik di peta. Alamat lengkap &amp; patokan diisi saat konfirmasi pesanan.</p>
+        <div data-locwidget="p"></div>
       </div>
     </section>
 
@@ -1281,15 +1399,6 @@ h1,h2,h3{letter-spacing:-.4px}
               <input id="checkoutPhone" required type="tel" inputmode="tel"
                 maxlength="20" autocomplete="tel" placeholder="08xxxxxxxxxx">
             </div>
-            <div class="form-field">
-              <label for="checkoutAddress">Alamat lengkap *</label>
-              <textarea id="checkoutAddress" required maxlength="500"
-                autocomplete="street-address" placeholder="Alamat rumah, desa, kecamatan..."></textarea>
-            </div>
-            <div class="form-field">
-              <label for="checkoutLandmark">Patokan / nama gang</label>
-              <input id="checkoutLandmark" maxlength="200">
-            </div>
           </div>
         </div>
 
@@ -1306,6 +1415,25 @@ h1,h2,h3{letter-spacing:-.4px}
             </button>
           </div>
           <p class="small muted" id="deliveryHint" style="margin:12px 0 0"></p>
+        </div>
+
+        <div class="panel" id="deliveryPanel">
+          <h3>📍 Titik &amp; alamat pengantaran</h3>
+          <div data-locwidget="c"></div>
+          <div id="checkoutMapWrap" class="hidden"><div id="checkoutMap" class="mini-map"></div></div>
+          <div class="route-info" id="checkoutRouteInfo"></div>
+          <div class="form-grid sub-h">
+            <div class="form-field">
+              <label for="checkoutAddress">Alamat lengkap *</label>
+              <textarea id="checkoutAddress" required maxlength="500"
+                autocomplete="street-address" placeholder="Nama jalan, nomor rumah, RT/RW, desa, kecamatan..."></textarea>
+              <span class="hint">Terisi otomatis dari titik peta. Lengkapi dengan nomor rumah atau detail lain.</span>
+            </div>
+            <div class="form-field">
+              <label for="checkoutLandmark">Patokan / nama gang</label>
+              <input id="checkoutLandmark" maxlength="200" placeholder="Dekat masjid, pagar hijau...">
+            </div>
+          </div>
         </div>
 
         <div class="panel">
@@ -1359,6 +1487,52 @@ h1,h2,h3{letter-spacing:-.4px}
     </div>
     <div id="modalBody"></div>
   </div>
+</div>
+
+<div id="mapPicker" class="mp hidden" role="dialog" aria-modal="true" aria-label="Pilih titik pengantaran lewat peta">
+  <div class="mp-stage" id="mpStage">
+    <div id="mpMap" class="mp-map"></div>
+    <div class="mp-top">
+      <button type="button" class="mp-back" onclick="closeMapPicker()" aria-label="Kembali">‹</button>
+      <div class="mp-search">
+        <div class="loc-search">
+          <span class="loc-ico" aria-hidden="true">🔍</span>
+          <input id="mpSearch" type="search" placeholder="Cari alamat atau nama tempat" autocomplete="off" aria-label="Cari alamat" enterkeyhint="search">
+          <button type="button" class="loc-x hidden" id="mpClear" aria-label="Hapus pencarian">✕</button>
+          <div class="loc-results hidden" id="mpResults" role="listbox"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mp-dot" aria-hidden="true"></div>
+    <div class="mp-pin" aria-hidden="true">
+      <svg viewBox="0 0 44 56" width="44" height="56"><path d="M22 55C22 55 4 34 4 21a18 18 0 0 1 36 0c0 13-18 34-18 34z" fill="#e07b0f" stroke="#fff" stroke-width="3"/><circle cx="22" cy="21" r="7" fill="#fff"/></svg>
+    </div>
+    <button type="button" class="mp-fab" id="mpFab" onclick="mpLocate()" aria-label="Gunakan lokasiku saat ini">◎</button>
+  </div>
+  <div class="mp-sheet">
+    <div class="mp-lbl">Titik pengantaran</div>
+    <div class="mp-addr" id="mpAddr">Geser peta untuk memilih titik</div>
+    <div class="mp-coord" id="mpCoord"></div>
+    <button type="button" class="btn-green btn-block" id="mpOk" onclick="confirmMapPicker()" disabled>Gunakan lokasi ini</button>
+  </div>
+</div>
+
+<button class="chat-fab" id="chatFab" type="button" onclick="openChat()" aria-label="Obrolan dengan penjual">
+  <span aria-hidden="true">💬</span><span class="cf-badge hidden" id="chatBadge">0</span>
+</button>
+
+<div id="chatPanel" class="chatp hidden" role="dialog" aria-modal="true" aria-label="Obrolan dengan penjual">
+  <div class="chatp-h">
+    <button type="button" class="chatp-back" onclick="closeChat()" aria-label="Tutup obrolan">‹</button>
+    <img src="logo.png" alt="" class="chatp-av">
+    <div class="chatp-t"><b id="chatTitle">WARUNGKU</b><span id="chatSub"></span></div>
+  </div>
+  <div class="chatp-m" id="chatMsgs" aria-live="polite"></div>
+  <div class="chatp-q" id="chatQuick"></div>
+  <form class="chatp-c" id="chatForm" autocomplete="off">
+    <textarea id="chatInput" rows="1" maxlength="1000" placeholder="Tulis pesan untuk penjual…" aria-label="Pesan untuk penjual"></textarea>
+    <button type="submit" class="chatp-send" aria-label="Kirim pesan">➤</button>
+  </form>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -1450,7 +1624,9 @@ const STORAGE = {
   cart:"jk3d_cart_v1",
   profile:"jk3d_profile_v1",
   favorites:"jk3d_favorites_v1",
-  orders:"jk3d_orders_v1"
+  orders:"jk3d_orders_v1",
+  chats:"jk3d_chats_v1",
+  reviews:"jk3d_reviews_v1"
 };
 
 function readStorage(key, fallback) {
@@ -1512,10 +1688,14 @@ let cart = readStorage(STORAGE.cart, []);
 let profile = readStorage(STORAGE.profile, {name:"",phone:"",address:"",landmark:""});
 let favorites = readStorage(STORAGE.favorites, []);
 let orders = readStorage(STORAGE.orders, []);
+let chats = readStorage(STORAGE.chats, []);
+let reviews = readStorage(STORAGE.reviews, []);
 
 if (!Array.isArray(cart)) cart = [];
 if (!Array.isArray(favorites)) favorites = [];
 if (!Array.isArray(orders)) orders = [];
+if (!Array.isArray(chats)) chats = [];
+if (!Array.isArray(reviews)) reviews = [];
 if (!profile || typeof profile !== "object") profile = {name:"",phone:"",address:"",landmark:""};
 
 cart = cart.filter(x => x && typeof x.id === "string" && Number(x.qty) > 0)
@@ -1589,12 +1769,12 @@ function saveOrders() {
 }
 
 let toastTimer = null;
-function toast(message) {
+function toast(message, ms = 2300) {
   const el = $("toast");
   el.textContent = message;
   el.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 2300);
+  toastTimer = setTimeout(() => el.classList.remove("show"), ms);
 }
 
 function vibrate() {
@@ -1804,6 +1984,7 @@ function renderProducts(targetId, list) {
         </div>
         <div class="product-info">
           <h3 class="product-name" onclick="openProduct('${p.id}')">${escapeHTML(p.name)}</h3>
+          ${ratingBadge(p.id)}
           <p class="product-desc">${escapeHTML(p.description)}</p>
           <div class="product-price">${money(p.price)}</div>
           <div class="product-bottom">
@@ -1858,6 +2039,7 @@ function renderShops() {
    15. PRODUCT DETAIL MODAL
    ========================================================= */
 function openModal(title, body) {
+  destroyTrack();
   lastFocusedElement = document.activeElement;
   $("modalTitle").textContent = title;
   $("modalBody").innerHTML = body;
@@ -1876,6 +2058,7 @@ function closeModal() {
   setTimeout(() => {
     modal.classList.add("hidden");
     document.body.style.overflow = "";
+    destroyTrack();
     if (lastFocusedElement && document.contains(lastFocusedElement)) {
       lastFocusedElement.focus({preventScroll:true});
     }
@@ -1931,6 +2114,7 @@ function renderProductDetail() {
       ${url ? imageMarkup(p) : `<span>${escapeHTML(p.emoji)}</span>`}
     </div>
     <h2 class="detail-title">${escapeHTML(p.name)}</h2>
+    ${ratingBadge(p.id)}
     <div class="detail-price">${money(p.price)}</div>
     <p class="detail-description">${escapeHTML(p.description)}</p>
     ${variations}
@@ -1941,6 +2125,7 @@ function renderProductDetail() {
         style="width:100%;min-height:70px;border:1px solid #dfe5dc;border-radius:12px;padding:11px;background:white"
       >${escapeHTML(detailState.note)}</textarea>
     </div>
+    ${reviewsSection(p.id)}
     <div class="detail-footer">
       <div class="qty-control">
         <button onclick="changeDetailQty(-1)" aria-label="Kurangi">−</button>
@@ -2096,7 +2281,9 @@ function setFulfillment(method) {
   $("deliveryHint").textContent = fulfillment === "delivery"
     ? "Biaya mengikuti pengaturan penjual. Konfirmasi jangkauan dan tarif langsung kepada penjual."
     : "Ambil pesanan sendiri. Biaya pengantaran tidak dikenakan.";
+  $("deliveryPanel").classList.toggle("hidden", fulfillment !== "delivery");
   renderCheckoutSummary();
+  if (fulfillment === "delivery" && currentPage === "checkout") renderCheckoutMap();
 }
 
 function renderCheckout() {
@@ -2110,7 +2297,7 @@ function renderCheckout() {
 
   $("checkoutName").value = profile.name || "";
   $("checkoutPhone").value = profile.phone || "";
-  $("checkoutAddress").value = profile.address || "";
+  $("checkoutAddress").value = profile.address || profile.place || "";
   $("checkoutLandmark").value = profile.landmark || "";
   $("checkoutNote").value = "";
 
@@ -2201,6 +2388,8 @@ function handleCheckout(event) {
 
   if (data.name.length < 2) return checkoutError("Nama pelanggan minimal 2 karakter.");
   if (!validPhone(data.phone)) return checkoutError("Nomor WhatsApp pelanggan tidak valid. Contoh: 081234567890.");
+  if (data.fulfillment === "delivery" && !hasLoc())
+    return checkoutError("Tentukan titik pengantaran lewat pencarian, lokasi saat ini, atau peta.");
   if (data.fulfillment === "delivery" && data.address.length < 8)
     return checkoutError("Isi alamat pengantaran dengan lengkap.");
   if (!data.payment || !settings.payments.includes(data.payment))
@@ -2210,7 +2399,7 @@ function handleCheckout(event) {
   if (!settings.isOpen)
     return checkoutError("Mohon maaf, toko sedang tutup. Silakan pesan kembali saat toko buka.");
 
-  profile = {name:data.name,phone:data.phone,address:data.address,landmark:data.landmark};
+  profile = {...profile,name:data.name,phone:data.phone,address:data.address,landmark:data.landmark};
   saveProfile();
 
   const localOrder = {
@@ -2220,6 +2409,12 @@ function handleCheckout(event) {
     phone:normalizePhone(data.phone),
     address:data.fulfillment === "pickup" ? "" : data.address,
     landmark:data.landmark,
+    cid:myCid() || "",
+    lat:data.fulfillment === "delivery" ? profile.lat : null,
+    lng:data.fulfillment === "delivery" ? profile.lng : null,
+    place:data.fulfillment === "delivery" ? (profile.place || "") : "",
+    shopLat:shopPos() ? shopPos()[0] : null,
+    shopLng:shopPos() ? shopPos()[1] : null,
     note:data.note,
     fulfillment:data.fulfillment,
     subtotal:cartSubtotal(),
@@ -2265,12 +2460,10 @@ $("checkoutForm").addEventListener("submit",handleCheckout);
 function renderProfile() {
   $("profileName").value = profile.name || "";
   $("profilePhone").value = profile.phone || "";
-  $("profileAddress").value = profile.address || "";
-  $("profileLandmark").value = profile.landmark || "";
   $("profileGreeting").textContent = profile.name
     ? "Halo, " + profile.name + "!"
     : "Halo, Sobat Jajanan!";
-  $("headerAddress").textContent = profile.address || "Tambahkan alamat pengantaran";
+  renderLocCurrent();
   $("profileShopName").textContent = settings.shopName;
   $("profileHours").textContent = settings.hours || "Belum diatur";
   $("profileArea").textContent = settings.area || "Belum diatur";
@@ -2281,18 +2474,15 @@ $("profileForm").addEventListener("submit",event => {
   event.preventDefault();
   const next = {
     name:$("profileName").value.trim(),
-    phone:$("profilePhone").value.trim(),
-    address:$("profileAddress").value.trim(),
-    landmark:$("profileLandmark").value.trim()
+    phone:$("profilePhone").value.trim()
   };
   if (next.phone && !validPhone(next.phone)) {
     toast("Format nomor WhatsApp belum benar.");
     return;
   }
-  profile = next;
+  profile = {...profile, ...next};
   saveProfile();
   renderProfile();
-  $("headerAddress").textContent = profile.address || "Tambahkan alamat pengantaran";
   toast("Profil berhasil disimpan di perangkat ini.");
 });
 
@@ -2329,6 +2519,9 @@ function renderOrders() {
       <div class="summary-row"><span>Total pesanan</span><strong>${money(order.total)}</strong></div>
       <p class="small muted">${order.fulfillment === "pickup" ? "Ambil sendiri" : "Diantar"} · ${escapeHTML(order.payment || "-")}</p>
       <div class="admin-actions">
+        ${trackButton(order)}
+        ${reviewButton(order)}
+        <button class="btn-light" onclick="openChat('${escapeHTML(order.id)}')">💬 Chat</button>
         <button class="btn-light" onclick="reorder('${escapeHTML(order.id)}')">Pesan Lagi</button>
       </div>
     </article>
@@ -2368,6 +2561,723 @@ function contactSeller() {
 }
 
 /* =========================================================
+   19. LOKASI, PETA & PELACAKAN PENGANTARAN
+   Peta: Leaflet + OpenStreetMap. Pencarian alamat: Nominatim.
+   Rute: OSRM. Semua tanpa kunci API.
+   ========================================================= */
+const GEO = {
+  api:"https://nominatim.openstreetmap.org",
+  osrm:"https://router.project-osrm.org",
+  tiles:"https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+  fallback:[-6.2088,106.8456]
+};
+const STATUS_FLOW = ["Menunggu konfirmasi","Dikonfirmasi","Diproses","Siap diambil / diantar","Selesai","Dibatalkan"];
+const TRACK_STEPS = ["Pesanan dikirim","Dikonfirmasi penjual","Sedang diproses","Dalam perjalanan","Pesanan selesai"];
+
+const mapsReady = () => typeof L !== "undefined";
+const isNum = v => typeof v === "number" && Number.isFinite(v);
+const hasLoc = () => isNum(profile.lat) && isNum(profile.lng);
+const shopPos = () => isNum(settings.shopLat) && isNum(settings.shopLng) ? [settings.shopLat, settings.shopLng] : null;
+const coordText = (lat, lng) => lat.toFixed(5) + ", " + lng.toFixed(5);
+
+function haversine(a, b) {
+  const R = 6371000, rad = x => x * Math.PI / 180;
+  const dLat = rad(b[0] - a[0]), dLng = rad(b[1] - a[1]);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const fmtDist = m => m < 1000 ? Math.round(m) + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km";
+function fmtTime(sec) {
+  const m = Math.max(1, Math.round(sec / 60));
+  return m < 60 ? m + " menit" : Math.floor(m / 60) + " jam" + (m % 60 ? " " + (m % 60) + " mnt" : "");
+}
+
+async function getJSON(url, ms = 10000) {
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, {signal:ctrl.signal, headers:{Accept:"application/json"}});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+
+function labelOf(r) {
+  const a = r.address || {};
+  const road = a.road || a.pedestrian || a.footway || a.path || "";
+  const parts = [
+    r.name && r.name !== road && !/^\d+$/.test(r.name) ? r.name : "",
+    road ? (a.house_number ? road + " No. " + a.house_number : road) : "",
+    a.neighbourhood || a.quarter || "",
+    a.village || a.suburb || a.hamlet || "",
+    a.city_district || a.subdistrict || "",
+    a.city || a.town || a.municipality || a.county || "",
+    a.state || ""
+  ].filter(Boolean);
+  const uniq = parts.filter((x, i) => parts.indexOf(x) === i);
+  return uniq.length >= 2 ? uniq.join(", ") : String(r.display_name || "").split(",").slice(0, 4).join(",").trim();
+}
+
+async function reverseGeocode(lat, lng) {
+  const j = await getJSON(`${GEO.api}/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=id`);
+  if (j.error) throw new Error(j.error);
+  return labelOf(j) || j.display_name || "";
+}
+
+async function searchPlaces(q) {
+  const s = shopPos();
+  const vb = s ? `&viewbox=${s[1] - 1},${s[0] + 1},${s[1] + 1},${s[0] - 1}` : "";
+  const j = await getJSON(`${GEO.api}/search?format=jsonv2&q=${encodeURIComponent(q)}&limit=6&addressdetails=1&countrycodes=id&accept-language=id${vb}`);
+  return j.map(r => ({
+    lat:Number(r.lat), lng:Number(r.lon),
+    title:(r.name || String(r.display_name).split(",")[0]).trim(),
+    sub:String(r.display_name || ""),
+    label:labelOf(r) || r.display_name
+  }));
+}
+
+function getPosition() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject({code:0});
+    navigator.geolocation.getCurrentPosition(resolve, reject, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+  });
+}
+function geoError(e) {
+  if (!window.isSecureContext && location.hostname !== "localhost") return "Fitur lokasi memerlukan koneksi aman (HTTPS).";
+  if (e && e.code === 1) return "Izin lokasi ditolak. Aktifkan izin lokasi untuk situs ini di pengaturan browser.";
+  if (e && e.code === 3) return "Pencarian lokasi terlalu lama. Coba lagi di area terbuka.";
+  if (e && e.code === 0) return "Perangkat ini tidak mendukung layanan lokasi.";
+  return "Lokasimu belum dapat ditemukan. Coba lagi atau pilih lewat peta.";
+}
+
+const tiles = map => L.tileLayer(GEO.tiles, {
+  maxZoom:19,
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+}).addTo(map);
+const pinIcon = (emoji, cls = "") => L.divIcon({
+  className:"wk-mk " + cls, html:`<div class="mk">${emoji}</div>`, iconSize:[40,48], iconAnchor:[20,48]
+});
+
+/* ---------- Pencarian alamat (dipakai bersama) ---------- */
+function bindSearch(input, box, clear, onPick) {
+  let timer = 0, seq = 0;
+  const hide = () => { box.classList.add("hidden"); box.innerHTML = ""; box._items = []; };
+  const run = async q => {
+    const my = ++seq;
+    box.classList.remove("hidden");
+    box.innerHTML = '<div class="loc-note">Mencari…</div>';
+    try {
+      const items = await searchPlaces(q);
+      if (my !== seq) return;
+      box._items = items;
+      box.innerHTML = items.length
+        ? items.map((it, i) => `<button type="button" class="loc-item" role="option" data-i="${i}"><span class="pi" aria-hidden="true">📍</span><span><b>${escapeHTML(it.title)}</b><small>${escapeHTML(it.sub)}</small></span></button>`).join("")
+        : '<div class="loc-note">Alamat tidak ditemukan. Coba kata kunci lain atau pilih lewat peta.</div>';
+    } catch (_) {
+      if (my === seq) box.innerHTML = '<div class="loc-note">Pencarian gagal. Periksa koneksi internet.</div>';
+    }
+  };
+  input.addEventListener("input", () => {
+    if (clear) clear.classList.toggle("hidden", !input.value);
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 3) { seq++; return hide(); }
+    timer = setTimeout(() => run(q), 600);
+  });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (q.length >= 3) { clearTimeout(timer); run(q); }
+    }
+    if (e.key === "Escape") hide();
+  });
+  box.addEventListener("click", e => {
+    const b = e.target.closest("[data-i]");
+    if (!b) return;
+    const it = (box._items || [])[Number(b.dataset.i)];
+    if (it) { hide(); onPick(it); }
+  });
+  if (clear) clear.addEventListener("click", () => {
+    input.value = ""; clear.classList.add("hidden"); hide(); input.focus();
+  });
+  document.addEventListener("click", e => {
+    if (!box.contains(e.target) && e.target !== input) hide();
+  });
+}
+
+/* ---------- Widget lokasi (header, profil, checkout) ---------- */
+function locWidgetHTML(p) {
+  return `
+    <div class="loc-search">
+      <span class="loc-ico" aria-hidden="true">🔍</span>
+      <input id="${p}Search" type="search" placeholder="Cari alamat, jalan, atau nama tempat" autocomplete="off" aria-label="Cari alamat pengantaran" enterkeyhint="search">
+      <button type="button" class="loc-x hidden" id="${p}Clear" aria-label="Hapus pencarian">✕</button>
+      <div class="loc-results hidden" id="${p}Results" role="listbox"></div>
+    </div>
+    <div class="loc-actions">
+      <button type="button" class="loc-btn" data-locate><span aria-hidden="true">◎</span>Lokasimu saat ini</button>
+      <button type="button" class="loc-btn alt" data-pickmap><span aria-hidden="true">🗺️</span>Pilih lewat peta</button>
+    </div>
+    <div data-loccur></div>`;
+}
+
+function initLocWidgets() {
+  document.querySelectorAll("[data-locwidget]").forEach(el => {
+    const p = el.dataset.locwidget;
+    el.innerHTML = locWidgetHTML(p);
+    bindSearch($(p + "Search"), $(p + "Results"), $(p + "Clear"), item => {
+      $(p + "Search").value = "";
+      $(p + "Clear").classList.add("hidden");
+      openMapPicker([item.lat, item.lng]);
+    });
+  });
+  renderLocCurrent();
+}
+
+function renderLocCurrent() {
+  const html = hasLoc()
+    ? `<div class="loc-cur on"><span class="dot" aria-hidden="true">●</span><div><span class="lc-t">Diantar ke titik ini</span><span class="lc-a">${escapeHTML(profile.place || coordText(profile.lat, profile.lng))}</span></div><button type="button" data-pickmap>Ubah</button></div>`
+    : `<div class="loc-cur"><span aria-hidden="true">📍</span><div><span class="lc-t">Belum ada titik pengantaran</span><span class="lc-a">Cari alamat, gunakan lokasi saat ini, atau pilih lewat peta.</span></div></div>`;
+  document.querySelectorAll("[data-loccur]").forEach(e => { e.innerHTML = html; });
+}
+
+function setDelivery(lat, lng, place, quiet) {
+  const oldPlace = profile.place || "", oldAddr = profile.address || "";
+  const moved = hasLoc() && haversine([profile.lat, profile.lng], [lat, lng]) > 5;
+  const label = place || coordText(lat, lng);
+  profile = {...profile, lat:Number(lat.toFixed(6)), lng:Number(lng.toFixed(6)), place:label};
+  if (moved) profile.address = "";
+  saveProfile();
+  renderLocCurrent();
+  if (currentPage === "checkout") {
+    const ta = $("checkoutAddress"), v = ta.value.trim();
+    if (!v || v === oldPlace || v === oldAddr) ta.value = label;
+    renderCheckoutMap();
+  }
+  if (!quiet) toast("Titik pengantaran disimpan ✓");
+}
+
+async function useMyLocation(btn) {
+  if (!navigator.geolocation || (!window.isSecureContext && location.hostname !== "localhost"))
+    return toast(geoError({code:navigator.geolocation ? -1 : 0}));
+  const orig = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = "<span>⏳</span>Mencari lokasi…"; }
+  try {
+    const p = await getPosition();
+    const {latitude:lat, longitude:lng, accuracy} = p.coords;
+    let place = "";
+    try { place = await reverseGeocode(lat, lng); } catch (_) {}
+    setDelivery(lat, lng, place, true);
+    toast(accuracy > 150
+      ? `Lokasi ditemukan (±${Math.round(accuracy)} m). Sesuaikan lewat peta bila perlu.`
+      : "Lokasimu saat ini dipakai sebagai titik pengantaran ✓");
+  } catch (e) {
+    toast(geoError(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+
+document.addEventListener("click", e => {
+  const l = e.target.closest("[data-locate]");
+  if (l) return useMyLocation(l);
+  if (e.target.closest("[data-pickmap]")) openMapPicker();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && mp.open) closeMapPicker(); });
+
+/* ---------- Pemilih titik lewat peta ---------- */
+const mp = {map:null, pos:null, label:"", timer:0, seq:0, acc:null, open:false};
+
+function openMapPicker(center) {
+  if (!mapsReady()) return toast("Peta gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
+  $("mapPicker").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  mp.open = true;
+  const known = hasLoc() ? [profile.lat, profile.lng] : null;
+  const start = center || known || shopPos() || GEO.fallback;
+  const zoom = center || known ? 17 : (shopPos() ? 15 : 13);
+  if (!mp.map) {
+    mp.map = L.map("mpMap", {zoomControl:false}).setView(start, zoom);
+    tiles(mp.map);
+    L.control.zoom({position:"bottomleft"}).addTo(mp.map);
+    mp.map.on("movestart", () => $("mpStage").classList.add("moving"));
+    mp.map.on("moveend", mpMoved);
+    bindSearch($("mpSearch"), $("mpResults"), $("mpClear"), it => {
+      $("mpSearch").value = ""; $("mpClear").classList.add("hidden");
+      mp.map.setView([it.lat, it.lng], 18);
+    });
+  } else {
+    mp.map.setView(start, zoom, {animate:false});
+  }
+  setTimeout(() => { mp.map.invalidateSize(); mpMoved(); }, 120);
+  if (!center && !known && !shopPos()) mpLocate(true);
+}
+
+function mpMoved() {
+  $("mpStage").classList.remove("moving");
+  const c = mp.map.getCenter();
+  mp.pos = [c.lat, c.lng];
+  $("mpCoord").textContent = coordText(c.lat, c.lng);
+  $("mpAddr").textContent = "Mencari alamat…";
+  $("mpOk").disabled = true;
+  clearTimeout(mp.timer);
+  const my = ++mp.seq;
+  mp.timer = setTimeout(async () => {
+    let label = "";
+    try { label = await reverseGeocode(c.lat, c.lng); } catch (_) {}
+    if (my !== mp.seq) return;
+    mp.label = label;
+    $("mpAddr").textContent = label || "Titik di peta (nama jalan tidak ditemukan)";
+    $("mpOk").disabled = false;
+  }, 450);
+}
+
+async function mpLocate(silent) {
+  if (!navigator.geolocation || (!window.isSecureContext && location.hostname !== "localhost")) {
+    if (!silent) toast(geoError({code:navigator.geolocation ? -1 : 0}));
+    return;
+  }
+  const fab = $("mpFab");
+  fab.disabled = true; fab.classList.add("spin");
+  try {
+    const p = await getPosition();
+    const {latitude:lat, longitude:lng, accuracy} = p.coords;
+    mp.map.setView([lat, lng], 18);
+    if (mp.acc) mp.map.removeLayer(mp.acc);
+    mp.acc = L.circle([lat, lng], {radius:accuracy, color:"#2b6cb0", weight:1, fillColor:"#2b6cb0", fillOpacity:.12, interactive:false}).addTo(mp.map);
+    if (accuracy > 150) toast(`Akurasi sinyal rendah (±${Math.round(accuracy)} m). Geser peta untuk menyesuaikan.`);
+  } catch (e) {
+    if (!silent) toast(geoError(e));
+  } finally {
+    fab.disabled = false; fab.classList.remove("spin");
+  }
+}
+
+function confirmMapPicker() {
+  if (!mp.pos) return;
+  setDelivery(mp.pos[0], mp.pos[1], mp.label, false);
+  closeMapPicker();
+}
+function closeMapPicker() {
+  $("mapPicker").classList.add("hidden");
+  document.body.style.overflow = "";
+  mp.open = false;
+}
+
+/* ---------- Rute (OSRM) ---------- */
+const routeCache = new Map();
+async function fetchRoute(a, b) {
+  const key = a.join() + ">" + b.join();
+  if (routeCache.has(key)) return routeCache.get(key);
+  const j = await getJSON(`${GEO.osrm}/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`, 12000);
+  const r = j.routes && j.routes[0];
+  if (!r) throw new Error("Rute tidak ditemukan");
+  const out = {coords:r.geometry.coordinates.map(c => [c[1], c[0]]), dist:r.distance, dur:r.duration};
+  routeCache.set(key, out);
+  return out;
+}
+
+/* ---------- Peta mini di checkout ---------- */
+const co = {map:null, group:null, seq:0};
+function renderCheckoutMap() {
+  const wrap = $("checkoutMapWrap"), info = $("checkoutRouteInfo");
+  if (!mapsReady()) {
+    wrap.classList.add("hidden");
+    info.innerHTML = "<span>Peta tidak dapat dimuat. Periksa koneksi internet.</span>";
+    return;
+  }
+  if (!hasLoc()) { wrap.classList.add("hidden"); info.innerHTML = ""; return; }
+  wrap.classList.remove("hidden");
+  const dest = [profile.lat, profile.lng], shop = shopPos(), my = ++co.seq;
+  if (!co.map) {
+    co.map = L.map("checkoutMap", {zoomControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false, touchZoom:false, boxZoom:false, keyboard:false});
+    tiles(co.map);
+    co.group = L.layerGroup().addTo(co.map);
+    co.map.on("click", () => openMapPicker());
+  }
+  co.group.clearLayers();
+  L.marker(dest, {icon:pinIcon("🏠", "cust")}).addTo(co.group);
+  if (shop) L.marker(shop, {icon:pinIcon("🏪")}).addTo(co.group);
+  const fit = pts => {
+    co.map.invalidateSize();
+    if (pts.length > 1) co.map.fitBounds(L.latLngBounds(pts), {padding:[42, 42], maxZoom:17, animate:false});
+    else co.map.setView(dest, 17, {animate:false});
+  };
+  setTimeout(() => fit(shop ? [dest, shop] : [dest]), 80);
+  if (!shop) { info.innerHTML = "<span>📍 Titik pengantaran tersimpan · ketuk peta untuk mengubah</span>"; return; }
+  info.innerHTML = `<span>📏 ±${fmtDist(haversine(shop, dest))} dari warung</span>`;
+  fetchRoute(shop, dest).then(r => {
+    if (my !== co.seq) return;
+    L.polyline(r.coords, {color:"#e07b0f", weight:5, opacity:.92, lineCap:"round"}).addTo(co.group);
+    fit(r.coords.concat([dest, shop]));
+    info.innerHTML = `<span>🛵 ${fmtDist(r.dist)} lewat jalan</span><span>⏱️ ±${fmtTime(r.dur)}</span>`;
+  }).catch(() => {});
+}
+
+/* ---------- Pelacakan pengantaran (pelanggan) ---------- */
+const trk = {map:null, group:null, id:"", seq:0, route:null, timer:0};
+const courierLive = o => !!(o && o.courier && isNum(o.courier.lat) && isNum(o.courier.lng) && Date.now() - Number(o.courier.t || 0) < 120000);
+
+function trackButton(o) {
+  if (o.fulfillment !== "delivery" || !isNum(o.lat) || !isNum(o.lng) || statusLabel(o.status) === "Dibatalkan") return "";
+  return `<button class="btn-green" style="padding:10px 14px" onclick="openTrack('${escapeHTML(o.id)}')">🗺️ Lihat peta${courierLive(o) ? " · Live" : ""}</button>`;
+}
+
+function openTrack(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  if (!mapsReady()) return toast("Peta gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
+  openModal("Peta Pengantaran", `
+    <div class="trk-map" id="trkMap"></div>
+    <div class="trk-live" id="trkLive"></div>
+    <div class="trk-stats">
+      <div><span>Jarak</span><b id="trkDist">–</b></div>
+      <div><span>Estimasi</span><b id="trkEta">–</b></div>
+      <div><span>Pesanan</span><b>${escapeHTML(o.id)}</b></div>
+    </div>
+    <div class="panel" style="margin:0 0 12px">
+      <h3>Status pengantaran</h3>
+      <ol class="trk-steps" id="trkSteps"></ol>
+    </div>
+    <div class="panel" style="margin:0 0 12px">
+      <h3>📍 Tujuan pengantaran</h3>
+      <p class="small muted" style="margin:0">${escapeHTML(o.address || o.place || coordText(o.lat, o.lng))}${o.landmark ? " (" + escapeHTML(o.landmark) + ")" : ""}</p>
+    </div>
+    <button class="btn-outline btn-block" style="margin-top:0" onclick="contactSeller()">💬 Hubungi penjual</button>`);
+  trk.id = id;
+  trk.route = null;
+  setTimeout(initTrackMap, 140);
+}
+
+function initTrackMap() {
+  const el = $("trkMap");
+  if (!el || !trk.id) return;
+  trk.map = L.map(el, {zoomControl:false});
+  tiles(trk.map);
+  L.control.zoom({position:"bottomright"}).addTo(trk.map);
+  trk.group = L.layerGroup().addTo(trk.map);
+  trk.timer = setInterval(refreshTrack, 20000);
+  paintTrack(true);
+}
+
+function renderTrackSteps(o) {
+  const idx = STATUS_FLOW.indexOf(statusLabel(o.status));
+  $("trkSteps").innerHTML = idx < 0 || idx === 5
+    ? '<li class="cur">Pesanan dibatalkan</li>'
+    : TRACK_STEPS.map((t, i) => `<li class="${i < idx || idx === 4 ? "done" : i === idx ? "cur" : ""}">${t}</li>`).join("");
+}
+
+async function paintTrack(fit) {
+  const o = orders.find(x => x.id === trk.id);
+  if (!o || !trk.map) return;
+  const dest = [o.lat, o.lng];
+  const sp = isNum(o.shopLat) && isNum(o.shopLng) ? [o.shopLat, o.shopLng] : shopPos();
+  const live = courierLive(o) ? [o.courier.lat, o.courier.lng] : null;
+  const from = live || sp, my = ++trk.seq;
+  trk.group.clearLayers();
+  L.marker(dest, {icon:pinIcon("🏠", "cust")}).addTo(trk.group);
+  if (sp) L.marker(sp, {icon:pinIcon("🏪")}).addTo(trk.group);
+  if (live) L.marker(live, {icon:pinIcon("🛵", "cour"), zIndexOffset:500}).addTo(trk.group);
+  renderTrackSteps(o);
+  const secs = live ? Math.max(0, Math.round((Date.now() - o.courier.t) / 1000)) : 0;
+  $("trkLive").innerHTML = live
+    ? `<span class="live-badge">● Posisi kurir langsung · ${secs < 10 ? "baru saja" : secs + " dtk lalu"}</span>`
+    : sp ? "Rute dari warung ke titik pengantaranmu. Posisi kurir muncul di sini saat dibagikan penjual."
+         : "Penjual belum mengatur lokasi warung, jadi rute belum dapat ditampilkan.";
+  trk.map.invalidateSize();
+  const pts = [dest].concat(from ? [from] : [], sp ? [sp] : []);
+  if (fit) {
+    if (pts.length > 1) trk.map.fitBounds(L.latLngBounds(pts), {padding:[46, 46], maxZoom:17, animate:false});
+    else trk.map.setView(dest, 16, {animate:false});
+  }
+  if (!from) { $("trkDist").textContent = "–"; $("trkEta").textContent = "–"; return; }
+  $("trkDist").textContent = "±" + fmtDist(haversine(from, dest));
+  $("trkEta").textContent = "–";
+  let r = trk.route;
+  const same = r && r.k === dest.join() && haversine(r.from, from) < (live ? 60 : 1) && (!live || Date.now() - r.at < 30000);
+  if (!same) {
+    try {
+      const x = await fetchRoute(from, dest);
+      r = {...x, from, k:dest.join(), at:Date.now()};
+      if (my !== trk.seq || !trk.map) return;
+      trk.route = r;
+    } catch (_) { r = null; }
+  }
+  if (!r || my !== trk.seq || !trk.map) return;
+  L.polyline(r.coords, {color:"#e07b0f", weight:6, opacity:.92, lineCap:"round"}).addTo(trk.group);
+  $("trkDist").textContent = fmtDist(r.dist);
+  $("trkEta").textContent = "±" + fmtTime(r.dur);
+  if (fit) trk.map.fitBounds(L.latLngBounds(r.coords).extend(dest), {padding:[46, 46], maxZoom:17, animate:false});
+}
+
+function refreshTrack() { if (trk.map && trk.id) paintTrack(false); }
+function destroyTrack() {
+  if (trk.timer) { clearInterval(trk.timer); trk.timer = 0; }
+  if (trk.map) { trk.map.remove(); trk.map = null; }
+  trk.group = null; trk.id = ""; trk.route = null;
+}
+
+/* =========================================================
+   19b. OBROLAN DENGAN PENJUAL & ULASAN PRODUK
+   Data disimpan lokal dan disinkronkan lewat firebase-sync.js.
+   ========================================================= */
+const CHAT_SEEN = "wk_chat_seen_c";
+let chatOpen = false, lastAdminCount = 0;
+
+function myCid() {
+  if (window.JK && typeof JK.uid === "function") return JK.uid();
+  if (document.readyState !== "complete") return null;
+  try {
+    let c = localStorage.getItem("wk_cid");
+    if (!c) { c = "L" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem("wk_cid", c); }
+    return c;
+  } catch (_) { return "L-anon"; }
+}
+const hhmm = t => new Date(t).toLocaleTimeString("id-ID", {hour:"2-digit", minute:"2-digit"}).replace(".", ":");
+function dayLabel(t) {
+  const d = new Date(t), n = new Date(), y = new Date(n);
+  y.setDate(n.getDate() - 1);
+  if (d.toDateString() === n.toDateString()) return "Hari ini";
+  if (d.toDateString() === y.toDateString()) return "Kemarin";
+  return d.toLocaleDateString("id-ID", {day:"numeric", month:"long", year:"numeric"});
+}
+const chatMine = () => { const c = myCid(); return c ? chats.filter(m => m && m.cid === c).sort((a, b) => a.t - b.t) : []; };
+const adminCount = () => chatMine().filter(m => m.from === "admin").length;
+const chatSeenMap = () => { const m = readStorage(CHAT_SEEN, {}); return m && typeof m === "object" ? m : {}; };
+function chatUnread() {
+  const c = myCid();
+  return c ? Math.max(0, adminCount() - (Number(chatSeenMap()[c]) || 0)) : 0;
+}
+function markChatSeen() {
+  const c = myCid(); if (!c) return;
+  const m = chatSeenMap(); m[c] = adminCount();
+  writeStorage(CHAT_SEEN, m);
+  updateChatBadge();
+}
+function updateChatBadge() {
+  const n = chatUnread(), b = $("chatBadge");
+  b.textContent = n > 9 ? "9+" : String(n);
+  b.classList.toggle("hidden", !n);
+  $("chatFab").classList.toggle("has", n > 0);
+}
+
+function renderChat(scroll) {
+  $("chatTitle").textContent = settings.shopName;
+  $("chatSub").innerHTML = `<i class="dot ${settings.isOpen ? "on" : ""}"></i>${settings.isOpen ? "Buka · penjual akan membalas di sini" : "Sedang tutup · balasan menyusul"}`;
+  const list = chatMine(), box = $("chatMsgs");
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 90;
+  if (!list.length) {
+    box.innerHTML = '<div class="chat-empty"><div>👋</div><h3>Halo, ada yang bisa dibantu?</h3><p>Tanya soal menu, pesanan, atau pengantaran. Penjual membalas langsung di sini.</p></div>';
+  } else {
+    let day = "", html = "";
+    for (const m of list) {
+      const d = dayLabel(m.t);
+      if (d !== day) { day = d; html += `<div class="chat-day"><span>${escapeHTML(d)}</span></div>`; }
+      html += `<div class="cb ${m.from === "customer" ? "me" : "sh"}"><div>${escapeHTML(m.text).replace(/\n/g, "<br>")}</div><small>${hhmm(m.t)}</small></div>`;
+    }
+    box.innerHTML = html;
+  }
+  const q = [];
+  if (orders[0]) q.push("Pesanan " + orders[0].id + " sudah sampai mana?");
+  q.push("Apakah warung masih buka?", "Berapa ongkos kirim?", "Bisa tambah pesanan?");
+  $("chatQuick").innerHTML = q.map(t => `<button type="button" data-q="${escapeHTML(t)}">${escapeHTML(t)}</button>`).join("");
+  if (scroll || near) box.scrollTop = box.scrollHeight;
+}
+
+function openChat(orderId) {
+  chatOpen = true;
+  $("chatPanel").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  markChatSeen();
+  renderChat(true);
+  const inp = $("chatInput");
+  if (orderId && !inp.value) inp.value = "Halo, saya mau tanya soal pesanan " + orderId + ". ";
+  autoGrow();
+  setTimeout(() => inp.focus({preventScroll:true}), 250);
+}
+function closeChat() {
+  chatOpen = false;
+  $("chatPanel").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+function autoGrow() {
+  const t = $("chatInput");
+  t.style.height = "auto";
+  t.style.height = Math.min(120, t.scrollHeight) + "px";
+}
+
+function sendChat(text) {
+  text = String(text || "").trim().slice(0, 1000);
+  if (!text) return false;
+  const cid = myCid();
+  if (!cid) { toast("Sedang menyambungkan ke server. Coba lagi sebentar."); return false; }
+  chats = readStorage(STORAGE.chats, []);
+  if (!Array.isArray(chats)) chats = [];
+  chats.push({
+    id:"M" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    cid, from:"customer",
+    name:profile.name || "Pelanggan",
+    phone:profile.phone ? normalizePhone(profile.phone) : "",
+    text, t:Date.now()
+  });
+  if (!writeStorage(STORAGE.chats, chats)) return false;
+  renderChat(true);
+  return true;
+}
+
+function onChatsChanged() {
+  chats = readStorage(STORAGE.chats, []);
+  if (!Array.isArray(chats)) chats = [];
+  const n = adminCount();
+  if (chatOpen) { markChatSeen(); renderChat(false); }
+  else {
+    updateChatBadge();
+    if (n > lastAdminCount && chatUnread() > 0) {
+      const last = chatMine().filter(m => m.from === "admin").pop();
+      if (last) { toast("💬 " + settings.shopName + ": " + last.text.slice(0, 80), 4500); vibrate(); }
+    }
+  }
+  lastAdminCount = n;
+}
+
+function initChat() {
+  $("chatForm").addEventListener("submit", e => {
+    e.preventDefault();
+    if (sendChat($("chatInput").value)) { $("chatInput").value = ""; autoGrow(); }
+  });
+  $("chatInput").addEventListener("input", autoGrow);
+  $("chatInput").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("chatForm").requestSubmit(); }
+  });
+  $("chatQuick").addEventListener("click", e => {
+    const b = e.target.closest("[data-q]");
+    if (b) sendChat(b.dataset.q);
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && chatOpen) closeChat(); });
+  lastAdminCount = adminCount();
+  updateChatBadge();
+  renderChat(true);
+  // setelah koneksi/otentikasi siap, samakan penghitung tanpa memunculkan notifikasi lama
+  setTimeout(() => { lastAdminCount = adminCount(); updateChatBadge(); }, 3000);
+}
+
+/* ---------- Ulasan ---------- */
+let rvExpanded = "";
+function ratingOf(pid) {
+  const l = reviews.filter(r => r && r.pid === pid && Number(r.rating) > 0);
+  if (!l.length) return {avg:0, count:0};
+  return {avg:l.reduce((a, r) => a + Number(r.rating), 0) / l.length, count:l.length};
+}
+const starsHTML = avg => `<span class="stars" style="--p:${Math.max(0, Math.min(100, avg / 5 * 100))}%" aria-hidden="true">★★★★★</span>`;
+function ratingBadge(pid) {
+  const r = ratingOf(pid);
+  if (!r.count) return "";
+  const t = r.avg.toFixed(1).replace(".", ",");
+  return `<div class="rate-badge" role="img" aria-label="Rating ${t} dari 5, ${r.count} ulasan">${starsHTML(r.avg)}<b>${t}</b><span>(${r.count})</span></div>`;
+}
+function maskName(n) {
+  const w = String(n || "Pelanggan").trim().split(/\s+/);
+  return w.length > 1 ? w[0] + " " + w[1].charAt(0).toUpperCase() + "." : w[0];
+}
+function reviewItem(r) {
+  const nm = maskName(r.name);
+  return `<div class="rv-item">
+    <div class="rv-head"><span class="rv-av">${escapeHTML(nm.charAt(0).toUpperCase())}</span>
+      <div><b>${escapeHTML(nm)}</b><small>${new Date(r.t).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"})}</small></div>
+      <span style="margin-left:auto">${starsHTML(Number(r.rating))}</span></div>
+    ${r.text ? `<p class="rv-text">${escapeHTML(r.text)}</p>` : ""}
+    ${r.reply ? `<div class="rv-reply"><b>Balasan penjual</b>${escapeHTML(r.reply)}</div>` : ""}
+  </div>`;
+}
+function reviewsSection(pid) {
+  const list = reviews.filter(r => r && r.pid === pid && Number(r.rating) > 0).sort((a, b) => b.t - a.t);
+  if (!list.length) return '<div class="option-group" id="rvBox"><h3>Ulasan pelanggan</h3><p class="small muted" style="margin:0">Belum ada ulasan. Kamu bisa menulis ulasan setelah pesananmu selesai.</p></div>';
+  const st = ratingOf(pid);
+  const bars = [5, 4, 3, 2, 1].map(n => {
+    const c = list.filter(r => Number(r.rating) === n).length;
+    return `<div class="rv-bar"><span>${n}</span><i><b style="width:${Math.round(c / list.length * 100)}%"></b></i><em>${c}</em></div>`;
+  }).join("");
+  const shown = rvExpanded === pid ? list : list.slice(0, 3);
+  return `<div class="option-group" id="rvBox"><h3>Ulasan pelanggan</h3>
+    <div class="rv-sum"><div class="rv-big"><strong>${st.avg.toFixed(1).replace(".", ",")}</strong>${starsHTML(st.avg)}<small>${st.count} ulasan</small></div><div class="rv-bars">${bars}</div></div>
+    ${shown.map(reviewItem).join("")}
+    ${list.length > 3 && rvExpanded !== pid ? `<button type="button" class="rv-more" onclick="rvExpanded='${escapeHTML(pid)}';$('rvBox').outerHTML=reviewsSection('${escapeHTML(pid)}')">Lihat semua ${list.length} ulasan</button>` : ""}
+  </div>`;
+}
+
+function reviewButton(o) {
+  if (statusLabel(o.status) !== "Selesai") return "";
+  const cid = myCid();
+  const left = (o.items || []).some(it => !reviews.some(r => r.oid === o.id && r.pid === it.id && r.uid === cid));
+  return left
+    ? `<button class="btn-green" style="padding:10px 14px" onclick="openReview('${escapeHTML(o.id)}')">⭐ Beri ulasan</button>`
+    : '<span class="rv-done">✓ Sudah diulas</span>';
+}
+
+let rvDraft = null;
+const STAR_WORDS = ["", "Kurang", "Cukup", "Lumayan", "Enak", "Luar biasa!"];
+function openReview(oid) {
+  const o = orders.find(x => x.id === oid);
+  if (!o) return;
+  const cid = myCid();
+  if (!cid) return toast("Sedang menyambungkan ke server. Coba lagi sebentar.");
+  const seen = new Set(), items = [];
+  for (const it of o.items || []) {
+    if (seen.has(it.id)) continue;
+    seen.add(it.id);
+    if (reviews.some(r => r.oid === oid && r.pid === it.id && r.uid === cid)) continue;
+    items.push(it);
+  }
+  if (!items.length) return toast("Semua item pesanan ini sudah kamu ulas. Terima kasih!");
+  rvDraft = {oid, r:{}};
+  openModal("Beri Ulasan", `
+    <p class="small muted" style="margin:0 0 12px">Bagaimana jajananmu? Ulasanmu membantu pelanggan lain memilih.</p>
+    ${items.map(it => `
+      <div class="rv-form" data-pid="${escapeHTML(it.id)}">
+        <h4>${escapeHTML(it.emoji || "🍽️")} ${escapeHTML(it.name)}</h4>
+        <div class="star-pick" role="group" aria-label="Beri bintang untuk ${escapeHTML(it.name)}">
+          ${[1, 2, 3, 4, 5].map(n => `<button type="button" data-v="${n}" aria-label="${n} bintang" onclick="setStar(this)">★</button>`).join("")}<span></span>
+        </div>
+        <textarea maxlength="500" placeholder="Ceritakan rasanya (opsional)"></textarea>
+      </div>`).join("")}
+    <button class="btn-green btn-block" onclick="submitReview()">Kirim Ulasan</button>`);
+}
+function setStar(btn) {
+  const form = btn.closest(".rv-form"), v = Number(btn.dataset.v);
+  rvDraft.r[form.dataset.pid] = v;
+  form.querySelectorAll(".star-pick button").forEach(b => b.classList.toggle("on", Number(b.dataset.v) <= v));
+  form.querySelector(".star-pick span").textContent = STAR_WORDS[v];
+  vibrate();
+}
+function submitReview() {
+  if (!rvDraft) return;
+  const cid = myCid(), o = orders.find(x => x.id === rvDraft.oid);
+  if (!cid || !o) return;
+  const added = [];
+  document.querySelectorAll("#modalBody .rv-form").forEach(f => {
+    const pid = f.dataset.pid, n = rvDraft.r[pid];
+    if (!n) return;
+    const it = (o.items || []).find(x => x.id === pid) || {};
+    added.push({
+      id:"R" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      pid, pname:(productById(pid) || it).name || "Jajanan",
+      oid:o.id, uid:cid, name:profile.name || o.name || "Pelanggan",
+      rating:n, text:f.querySelector("textarea").value.trim().slice(0, 500), t:Date.now()
+    });
+  });
+  if (!added.length) return toast("Pilih jumlah bintang dulu.");
+  reviews = readStorage(STORAGE.reviews, []);
+  if (!Array.isArray(reviews)) reviews = [];
+  reviews.unshift(...added);
+  if (!writeStorage(STORAGE.reviews, reviews)) return;
+  rvDraft = null;
+  closeModal();
+  toast("Terima kasih atas ulasanmu ⭐");
+  if (currentPage === "orders") renderOrders();
+  if (currentPage === "home") renderHome();
+}
+
+/* =========================================================
    20. SEARCH EVENTS & APPLICATION INITIALIZATION
    ========================================================= */
 $("searchInput").addEventListener("input",event => {
@@ -2388,6 +3298,13 @@ window.addEventListener("storage",event => {
   if (event.key === STORAGE.profile) profile = readStorage(STORAGE.profile,profile);
   if (event.key === STORAGE.favorites) favorites = readStorage(STORAGE.favorites,favorites);
   if (event.key === STORAGE.orders) orders = readStorage(STORAGE.orders,orders);
+  if (event.key === STORAGE.reviews) {
+    reviews = readStorage(STORAGE.reviews,reviews);
+    if (!Array.isArray(reviews)) reviews = [];
+    if (currentPage === "categories") renderCategoriesPage();
+    if ($("rvBox") && detailState.id) $("rvBox").outerHTML = reviewsSection(detailState.id);
+  }
+  if (event.key === STORAGE.chats) onChatsChanged();
 
   updateCartBadge();
   if (currentPage === "home") renderHome();
@@ -2395,6 +3312,7 @@ window.addEventListener("storage",event => {
   if (currentPage === "profile") renderProfile();
   if (currentPage === "favorites") renderFavorites();
   if (currentPage === "orders") renderOrders();
+  if (event.key === STORAGE.orders || event.key === STORAGE.settings) refreshTrack();
 });
 
 document.addEventListener("visibilitychange",() => {
@@ -2402,6 +3320,9 @@ document.addEventListener("visibilitychange",() => {
   products = normalizeProducts(readStorage(STORAGE.products, products));
   settings = normalizeSettings(readStorage(STORAGE.settings, settings));
   orders = readStorage(STORAGE.orders, orders);
+  reviews = readStorage(STORAGE.reviews, reviews);
+  if (!Array.isArray(reviews)) reviews = [];
+  onChatsChanged();
   if (currentPage === "home") renderHome();
   if (currentPage === "orders") renderOrders();
 });
@@ -2411,6 +3332,8 @@ function initApp() {
   renderHome();
   renderCategoriesPage();
   renderShops();
+  initLocWidgets();
+  initChat();
   renderProfile();
   $("deliveryHint").textContent = "Biaya mengikuti pengaturan penjual.";
   // Pastikan halaman pertama tetap beranda.
