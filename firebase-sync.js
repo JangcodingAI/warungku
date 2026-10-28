@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 const ADMIN = window.JK_ROLE === "admin";
-const KEY = {products:"jk3d_products_v1", settings:"jk3d_settings_v1", orders:"jk3d_orders_v1"};
+const KEY = {products:"jk3d_products_v1", settings:"jk3d_settings_v1", orders:"jk3d_orders_v1", chats:"jk3d_chats_v1", reviews:"jk3d_reviews_v1"};
 
 if (firebaseConfig.apiKey.startsWith("ISI_")) {
   console.warn("Firebase belum dikonfigurasi — berjalan dalam mode lokal.");
@@ -26,6 +26,7 @@ if (firebaseConfig.apiKey.startsWith("ISI_")) {
 function start() {
   const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getDatabase(app);
   let applying = false, remote = new Map(), subscribed = false, offs = [];
+  let remoteChat = new Set(), remoteRev = new Map();
   const warn = e => { console.warn(e); window.toast && window.toast("Gagal sinkron: " + (e.code || e.message)); };
 
   // Tulis hasil dari server ke cache lokal lalu beri tahu halaman
@@ -56,6 +57,22 @@ function start() {
       if (ADMIN) for (const id of remote.keys()) if (!ids.has(id)) remove(ref(db, "orders/" + id)).catch(warn);
     } else if (ADMIN && (k === KEY.products || k === KEY.settings)) {
       set(ref(db, k === KEY.products ? "products" : "settings"), d).catch(warn);
+    } else if (k === KEY.chats && Array.isArray(d)) {
+      // Obrolan: pesan tidak pernah diubah, jadi cukup kirim pesan yang belum ada di server.
+      for (const m of d) {
+        if (!m || !m.id || !m.cid || remoteChat.has(m.id)) continue;
+        const mine = ADMIN ? m.from === "admin" : (m.from === "customer" && m.cid === u.uid);
+        if (mine) set(ref(db, "chats/" + m.cid + "/" + m.id), m).catch(warn);
+      }
+    } else if (k === KEY.reviews && Array.isArray(d)) {
+      const ids = new Set(d.map(r => r && r.id));
+      for (const r of d) {
+        if (!r || !r.id) continue;
+        const s2 = JSON.stringify(r);
+        if (ADMIN) { if (remoteRev.get(r.id) !== s2) set(ref(db, "reviews/" + r.id), JSON.parse(s2)).catch(warn); }
+        else if (r.uid === u.uid && !remoteRev.has(r.id)) set(ref(db, "reviews/" + r.id), JSON.parse(s2)).catch(warn);
+      }
+      if (ADMIN) for (const id of remoteRev.keys()) if (!ids.has(id)) remove(ref(db, "reviews/" + id)).catch(warn);
     }
   }
 
@@ -72,6 +89,28 @@ function start() {
       if (v == null) { ADMIN && window.seedRemote && window.seedRemote("s"); return; }
       apply(KEY.settings, v);
     }, warn));
+    // Obrolan: admin membaca semua percakapan, pelanggan hanya percakapannya sendiri
+    offs.push(onValue(ADMIN ? ref(db, "chats") : ref(db, "chats/" + u.uid), s => {
+      const arr = [];
+      remoteChat = new Set();
+      const add = c => { const v = c.val(); if (v && v.id) { remoteChat.add(v.id); arr.push(v); } };
+      if (ADMIN) s.forEach(th => { th.forEach(add); }); else s.forEach(add);
+      try { for (const m of JSON.parse(localStorage.getItem(KEY.chats) || "[]"))
+        if (m && !remoteChat.has(m.id) && Date.now() - m.t < 12e4 && m.from === (ADMIN ? "admin" : "customer")) arr.push(m); } catch (e) {}
+      arr.sort((a, b) => a.t - b.t);
+      apply(KEY.chats, arr);
+    }, warn));
+    // Ulasan: terbuka untuk semua pengunjung
+    offs.push(onValue(ref(db, "reviews"), s => {
+      remoteRev = new Map(); const arr = [];
+      s.forEach(c => { const v = c.val(); if (v && v.id) { remoteRev.set(v.id, JSON.stringify(v)); arr.push(v); } });
+      if (!ADMIN) {
+        try { for (const r of JSON.parse(localStorage.getItem(KEY.reviews) || "[]"))
+          if (r && !remoteRev.has(r.id) && Date.now() - r.t < 12e4) arr.push(r); } catch (e) {}
+      }
+      arr.sort((a, b) => b.t - a.t);
+      apply(KEY.reviews, arr);
+    }, warn));
     const q = ADMIN ? ref(db, "orders") : query(ref(db, "orders"), orderByChild("uid"), equalTo(u.uid));
     offs.push(onValue(q, s => {
       remote = new Map(); const arr = [];
@@ -84,7 +123,7 @@ function start() {
       apply(KEY.orders, arr);
     }, warn));
   }
-  const unlisten = () => { offs.forEach(f => f()); offs = []; subscribed = false; remote = new Map(); };
+  const unlisten = () => { offs.forEach(f => f()); offs = []; subscribed = false; remote = new Map(); remoteChat = new Set(); remoteRev = new Map(); };
 
   onAuthStateChanged(auth, u => {
     if (ADMIN) {
@@ -114,6 +153,7 @@ function start() {
       const s = await get(ref(db, "users/" + c.user.uid));
       return {...(s.val() || {}), email};
     },
-    logout: () => signOut(auth)
+    logout: () => signOut(auth),
+    uid: () => (auth.currentUser ? auth.currentUser.uid : null)
   };
 }
