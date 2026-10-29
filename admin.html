@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1a110a">
 <title>Panel Pengelola — WARUNGKU</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -273,10 +273,18 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
 .qa .qrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.qa h3{margin-bottom:0}
 .autorow{margin:10px 2px 0!important}
 .mb small{display:flex;justify-content:flex-end;align-items:center;gap:6px}
-.mdel{padding:0 2px;font-size:10px;opacity:.4;background:none;line-height:1}.mdel:hover{opacity:1}
 .mauto{display:block;font-style:normal;font-size:10px;font-weight:700;margin-bottom:3px;opacity:.85}
 .mb.c .mauto{color:var(--green)}
-.cdel{margin-left:auto;flex:none}
+[data-hold]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+.holding{animation:holdp .48s ease-out forwards}
+@keyframes holdp{to{transform:scale(.97);filter:brightness(.93)}}
+.hsel{outline:2px solid var(--green);outline-offset:2px}
+.hm{position:fixed;z-index:310;min-width:132px;padding:5px;background:#fff;border-radius:16px;box-shadow:0 14px 40px #0004,0 0 0 1px #0000000d;animation:hmi .14s ease-out}
+.hm button{display:block;width:100%;padding:12px 20px;border-radius:12px;color:#d6322a;font-weight:800;font-size:15px;text-align:center}
+.hm button:hover,.hm button:focus-visible{background:#fde7e5;outline:0}
+@keyframes hmi{from{opacity:0;transform:translateY(6px) scale(.94)}}
+.hhint{margin:8px 2px 0;font-size:11.5px;color:var(--mut)}
+.nohint .hhint{display:none}
 .ask{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;background:#1a110a99;backdrop-filter:blur(4px);animation:askin .18s ease-out}
 .ask.out{opacity:0;transition:opacity .16s}
 @keyframes askin{from{opacity:0}}
@@ -289,6 +297,46 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
 .aska{display:flex;gap:10px;margin-top:22px}.aska .btn{flex:1;height:46px;border-radius:14px}
 .btn.dngf{background:linear-gradient(180deg,#e8645a,#c8443b);color:#fff;border-color:#c8443b;box-shadow:0 8px 18px #c8443b40}
 @media(max-width:860px){.topbar{margin-bottom:12px}}
+
+/* dialog produk */
+#dlg{overflow:hidden;width:min(calc(100% - 24px),600px)}
+#pform.dl{padding:0;display:flex;flex-direction:column;max-height:92vh;max-height:92dvh}
+.dh{display:flex;align-items:flex-start;gap:14px;padding:22px 22px 14px;border-bottom:1px solid var(--line)}
+.dh>div{flex:1;min-width:0}.dh h3{margin:0;font-size:20px}.dsub{margin:3px 0 0;font-size:12.5px;color:var(--mut)}
+.dx{flex:none;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:24px;line-height:1;color:#4d5d54;display:grid;place-items:center;transition:.15s}
+.dx:hover{background:var(--bg);color:var(--ink)}
+.db{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 22px 8px;overscroll-behavior:contain}
+.ds{padding:16px 0 4px}.ds+.ds{border-top:1px dashed var(--line)}
+.ds h4{margin:0 0 12px;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut);font-weight:800}
+.up{display:flex;gap:16px;align-items:center}
+.upv{position:relative;flex:none;width:104px;height:104px;border-radius:18px;background:var(--mint);border:2px dashed #e9c58f;display:grid;place-items:center;overflow:hidden;font-size:40px}
+.upv.has{border-style:solid;border-color:var(--line)}
+.upv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.upv.busy::after{content:"";position:absolute;inset:0;background:#fffc;display:grid}
+.upv.busy::before{content:"";position:absolute;z-index:2;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border:3px solid #f3d6ac;border-top-color:var(--green);border-radius:50%;animation:upspin .7s linear infinite}
+@keyframes upspin{to{transform:rotate(360deg)}}
+.upc{flex:1;min-width:0}.uph{margin:0 0 10px;font-size:12.5px;color:var(--mut);line-height:1.45}
+.upb{display:flex;flex-wrap:wrap;gap:8px}
+.upe{display:block;margin-top:8px;min-height:0;font-size:12px;color:var(--red);font-weight:600}
+.upe:empty{display:none}
+.up.drag .upv{border-color:var(--green);background:#ffe8c7}
+.dfoot{display:flex;gap:10px;justify-content:flex-end;padding:14px 22px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff}
+.dfoot .btn{min-width:110px}
+@media(max-width:640px){
+  #dlg{width:100%;max-width:100%;margin:auto 0 0;border-radius:24px 24px 0 0}
+  #pform.dl{max-height:94vh;max-height:94dvh}
+  .dh{padding:18px 16px 12px}.db{padding:4px 16px 6px}.dfoot{padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .dfoot .btn{flex:1}
+  .up{flex-direction:column;align-items:stretch;text-align:center}.upv{width:132px;height:132px;margin:0 auto}.upb{justify-content:center}
+}
+@media(max-width:380px){.dl .grid2,#pform .grid2{grid-template-columns:1fr}}
+
+/* tanpa zoom + responsif */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+*{-webkit-tap-highlight-color:transparent}
+body{overflow-x:hidden;touch-action:manipulation}
+img,video,canvas,svg{max-width:100%}
+@media(max-width:820px){input,select,textarea{font-size:16px!important}}
 </style>
 <script>try{if(!localStorage.getItem("wk_ses_admin"))document.documentElement.classList.add("wk-lock")}catch(e){}</script>
 <link rel="stylesheet" href="warungku.css">
@@ -377,7 +425,7 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
     <section id="v-chat" hidden>
       <div class="chatx" id="chatx">
         <div class="card cl">
-          <div class="cth"><input id="cq" type="search" placeholder="Cari pelanggan atau pesan"><label class="nrow autorow"><input type="checkbox" id="autoSw"> 🤖 Balas otomatis oleh AI</label></div>
+          <div class="cth"><input id="cq" type="search" placeholder="Cari pelanggan atau pesan"><label class="nrow autorow"><input type="checkbox" id="autoSw"> 🤖 Balas otomatis oleh AI</label><p class="hhint">Tekan &amp; tahan obrolan atau pesan untuk menghapus.</p></div>
           <div class="cthreads" id="cthreads"></div>
         </div>
         <div class="card ccv" id="cconv"></div>
@@ -424,23 +472,54 @@ a.btn{text-decoration:none;color:var(--ink)}a.btn.pri{color:#fff}
   </div>
 </div>
 
-<dialog id="dlg">
+<dialog id="dlg" aria-labelledby="dTitle">
   <form class="dl" id="pform">
-    <h3 id="dTitle">Tambah produk</h3>
-    <input type="hidden" id="pId">
-    <div class="fld"><label for="pName">Nama produk</label><input id="pName" required minlength="2"></div>
-    <div class="grid2">
-      <div class="fld"><label for="pPrice">Harga (Rp)</label><input id="pPrice" type="number" min="1" max="10000000" required></div>
-      <div class="fld"><label for="pCat">Kategori</label><select id="pCat"></select></div>
-      <div class="fld"><label for="pEmo">Emoji</label><input id="pEmo" maxlength="4" placeholder="🍡"></div>
-      <div class="fld"><label for="pBadge">Label</label><select id="pBadge"><option value="">Tanpa label</option><option>Terlaris</option><option>Favorit</option><option>Baru</option></select></div>
+    <header class="dh">
+      <div><h3 id="dTitle">Tambah produk</h3><p class="dsub" id="dSub">Lengkapi detail produk yang akan tampil di toko.</p></div>
+      <button type="button" class="dx" data-act="close" aria-label="Tutup">&times;</button>
+    </header>
+    <div class="db">
+      <input type="hidden" id="pId"><input type="hidden" id="pImg">
+      <section class="ds" aria-labelledby="hFoto">
+        <h4 id="hFoto">Foto produk</h4>
+        <div class="up" id="upBox">
+          <div class="upv" id="upPrev"><span id="upEmoji" aria-hidden="true">🍽️</span><img id="upImg" alt="Pratinjau foto produk" hidden></div>
+          <div class="upc">
+            <p class="uph">Pilih dari galeri atau ambil langsung dengan kamera. Foto otomatis diperkecil agar ringan. Opsional.</p>
+            <div class="upb">
+              <button type="button" class="btn sm pri" id="upPick">Pilih foto</button>
+              <button type="button" class="btn sm" id="upCam">Kamera</button>
+              <button type="button" class="btn sm dng" id="upDel" hidden>Hapus foto</button>
+            </div>
+            <input type="file" id="pFile" accept="image/*" hidden>
+            <input type="file" id="pCamF" accept="image/*" capture="environment" hidden>
+            <small class="upe" id="upErr" role="alert"></small>
+          </div>
+        </div>
+      </section>
+      <section class="ds" aria-labelledby="hInfo">
+        <h4 id="hInfo">Informasi produk</h4>
+        <div class="fld"><label for="pName">Nama produk</label><input id="pName" required minlength="2" maxlength="80" autocomplete="off"></div>
+        <div class="grid2">
+          <div class="fld"><label for="pPrice">Harga (Rp)</label><input id="pPrice" type="number" inputmode="numeric" min="1" max="10000000" required></div>
+          <div class="fld"><label for="pCat">Kategori</label><select id="pCat"></select></div>
+        </div>
+        <div class="fld"><label for="pDesc">Deskripsi</label><textarea id="pDesc" rows="3"></textarea></div>
+      </section>
+      <section class="ds" aria-labelledby="hOpsi">
+        <h4 id="hOpsi">Tampilan &amp; pilihan</h4>
+        <div class="grid2">
+          <div class="fld"><label for="pEmo">Emoji</label><input id="pEmo" maxlength="4" placeholder="🍡"></div>
+          <div class="fld"><label for="pBadge">Label</label><select id="pBadge"><option value="">Tanpa label</option><option>Terlaris</option><option>Favorit</option><option>Baru</option></select></div>
+        </div>
+        <div class="fld"><label for="pVar">Pilihan varian (pisahkan dengan koma)</label><input id="pVar" placeholder="Original, Pedas"></div>
+        <div class="grid2">
+          <div class="fld"><label for="pSp">Level pedas</label><select id="pSp"><option value="false">Tidak ada</option><option value="true">Pelanggan bisa pilih</option></select></div>
+          <div class="fld"><label for="pAv">Stok</label><select id="pAv"><option value="true">Tersedia</option><option value="false">Habis</option></select></div>
+        </div>
+      </section>
     </div>
-    <div class="fld"><label for="pImg">URL foto (opsional)</label><input id="pImg" placeholder="https://..."></div>
-    <div class="fld"><label for="pDesc">Deskripsi</label><textarea id="pDesc"></textarea></div>
-    <div class="fld"><label for="pVar">Pilihan varian (pisahkan dengan koma)</label><input id="pVar" placeholder="Original, Pedas"></div>
-    <div class="fld"><label for="pSp">Pilihan level pedas</label><select id="pSp"><option value="false">Tidak ada</option><option value="true">Ada (pelanggan bisa pilih level pedas)</option></select></div>
-    <div class="fld"><label for="pAv">Stok</label><select id="pAv"><option value="true">Tersedia</option><option value="false">Habis</option></select></div>
-    <div class="of"><button type="button" class="btn" data-act="close">Batal</button><button class="btn pri" id="pSave">Simpan produk</button></div>
+    <footer class="dfoot"><button type="button" class="btn" data-act="close">Batal</button><button class="btn pri" id="pSave">Simpan produk</button></footer>
   </form>
 </dialog>
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -590,21 +669,78 @@ function rProducts(){
 function openP(id){
   const p=P.find(x=>x.id===id);
   $("pCat").innerHTML=CATS.map(c=>`<option value="${c[0]}">${esc(c[1])}</option>`).join("");
-  $("dTitle").textContent=p?"Edit produk":"Tambah produk";
+  $("dTitle").textContent=p?"Edit produk":"Tambah produk";$("dSub").textContent=p?"Ubah detail produk lalu simpan.":"Lengkapi detail produk yang akan tampil di toko.";
   $("pId").value=p?p.id:"";$("pName").value=p?p.name:"";$("pPrice").value=p?p.price:"";$("pCat").value=p?p.category:CATS[0][0];
-  $("pEmo").value=p?p.emoji:"";$("pBadge").value=p?p.badge:"";$("pImg").value=p?p.image:"";$("pDesc").value=p?p.description:"";
+  $("pEmo").value=p?p.emoji:"";$("pBadge").value=p?p.badge:"";$("pDesc").value=p?p.description:"";setPhotoUI(p&&p.image||"");$("upErr").textContent="";
   $("pVar").value=p?p.variations.join(", "):"";$("pAv").value=String(p?p.available:true);$("pSp").value=String(!!(p&&p.spicy));
-  $("dlg").showModal();
+  $("dlg").showModal();document.querySelector("#dlg .db").scrollTop=0;
 }
 $("pform").addEventListener("submit",e=>{
   e.preventDefault();
   const id=$("pId").value,img=$("pImg").value.trim(),price=Number($("pPrice").value);
-  if(img&&!/^(https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/i.test(img))return toast("URL foto harus diawali http:// atau https://");
+  if($("upPrev").classList.contains("busy"))return toast("Tunggu, foto sedang diproses.");
+  if(img&&!/^(https?:\/\/|data:image\/(png|jpe?g|webp|gif);base64,)/i.test(img))return toast("Foto tidak valid. Pilih ulang fotonya.");
   if(!Number.isFinite(price)||price<=0)return toast("Harga harus lebih dari 0.");
   const d={name:$("pName").value.trim(),price,category:$("pCat").value,emoji:$("pEmo").value.trim()||"🍽️",image:img,description:$("pDesc").value.trim(),variations:$("pVar").value.split(",").map(s=>s.trim()).filter(Boolean),available:$("pAv").value==="true",spicy:$("pSp").value==="true",badge:$("pBadge").value};
   if(id)Object.assign(P.find(x=>x.id===id),d);else P.unshift({id:"p"+Date.now().toString(36),spicy:false,...d});
   if(saveP()){$("dlg").close();toast(id?"Produk diperbarui.":"Produk ditambahkan.");render()}
 });
+
+
+/* Upload foto produk */
+function setPhotoUI(src){
+  $("pImg").value=src||"";
+  const im=$("upImg"),has=!!src;
+  im.hidden=!has;if(has)im.src=src;else im.removeAttribute("src");
+  $("upPrev").classList.toggle("has",has);$("upDel").hidden=!has;$("upEmoji").hidden=has;
+  $("upEmoji").textContent=$("pEmo").value.trim()||"🍽️";
+  $("upPick").textContent=has?"Ganti foto":"Pilih foto";
+}
+$("upImg").addEventListener("error",()=>{if($("pImg").value){$("upImg").hidden=true;$("upEmoji").hidden=false;$("upPrev").classList.remove("has");$("upErr").textContent="Foto lama tidak bisa dimuat. Pilih foto baru."}});
+$("pEmo").addEventListener("input",()=>{if(!$("pImg").value)$("upEmoji").textContent=$("pEmo").value.trim()||"🍽️"});
+function compressPhoto(file){
+  return new Promise((res,rej)=>{
+    if(!file||!/^image\//i.test(file.type))return rej(new Error("File harus berupa gambar (JPG, PNG, atau WebP)."));
+    if(file.size>20*1024*1024)return rej(new Error("Ukuran foto terlalu besar (maks 20 MB)."));
+    const url=URL.createObjectURL(file),im=new Image();
+    im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("Foto tidak bisa dibuka. Coba format JPG atau PNG."))};
+    im.onload=()=>{
+      try{
+        URL.revokeObjectURL(url);
+        let w=im.naturalWidth,h=im.naturalHeight;if(!w||!h)throw 0;
+        let max=900,out="";
+        for(let k=0;k<6;k++){
+          const sc=Math.min(1,max/Math.max(w,h)),cw=Math.max(1,Math.round(w*sc)),ch=Math.max(1,Math.round(h*sc)),c=document.createElement("canvas");
+          c.width=cw;c.height=ch;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,cw,ch);x.drawImage(im,0,0,cw,ch);
+          let q=.82;out=c.toDataURL("image/webp",q);const type=out.startsWith("data:image/webp")?"image/webp":"image/jpeg";
+          if(type!=="image/webp")out=c.toDataURL(type,q);
+          while(out.length>150000&&q>.45){q-=.1;out=c.toDataURL(type,q)}
+          if(out.length<=150000)break;max=Math.round(max*.8);
+        }
+        if(!/^data:image\/(webp|jpeg);base64,/.test(out))throw 0;
+        res(out);
+      }catch(e){rej(new Error("Foto tidak bisa diproses. Coba foto lain."))}
+    };
+    im.src=url;
+  });
+}
+async function takePhoto(file){
+  const err=$("upErr"),pv=$("upPrev");err.textContent="";
+  if(!file)return;
+  pv.classList.add("busy");$("pSave").disabled=true;
+  try{setPhotoUI(await compressPhoto(file))}
+  catch(e){err.textContent=e.message||"Foto gagal diproses."}
+  finally{pv.classList.remove("busy");$("pSave").disabled=false}
+}
+$("upPick").addEventListener("click",()=>$("pFile").click());
+$("upCam").addEventListener("click",()=>$("pCamF").click());
+$("upDel").addEventListener("click",()=>{$("upErr").textContent="";setPhotoUI("")});
+["pFile","pCamF"].forEach(id=>$(id).addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];e.target.value="";takePhoto(f)}));
+{const b=$("upBox");
+ b.addEventListener("dragover",e=>{e.preventDefault();b.classList.add("drag")});
+ b.addEventListener("dragleave",()=>b.classList.remove("drag"));
+ b.addEventListener("drop",e=>{e.preventDefault();b.classList.remove("drag");const f=e.dataTransfer&&e.dataTransfer.files[0];if(f)takePhoto(f)})}
+$("dlg").addEventListener("click",e=>{if(e.target===$("dlg"))$("dlg").close()});
 
 /* Pengaturan */
 function rStore(){
@@ -922,15 +1058,15 @@ function rChat(){
   $("autoSw").checked=getPref("autoreply",true);
   const q=($("cq").value||"").trim().toLowerCase(),T=threads();
   const F=T.filter(t=>!q||(t.name+" "+t.phone+" "+t.last.text).toLowerCase().includes(q));
-  $("cthreads").innerHTML=F.length?F.map(t=>`<button type="button" class="ct ${t.cid===acid?"on":""}" data-thread="${esc(t.cid)}"><span class="av">${esc(init(t.name))}</span><span class="ctb"><b>${esc(t.name)}</b><small>${t.last.from==="admin"?"Anda: ":""}${esc(t.last.text)}</small></span><span class="ctm"><em>${ago(t.last.t)}</em>${t.unread?`<i class="cu">${t.unread}</i>`:""}</span></button>`).join(""):empty("💬","Belum ada obrolan","Pesan dari pelanggan akan muncul di sini.");
+  $("cthreads").innerHTML=F.length?F.map(t=>`<button type="button" class="ct ${t.cid===acid?"on":""}" data-thread="${esc(t.cid)}" data-hold="t:${esc(t.cid)}"><span class="av">${esc(init(t.name))}</span><span class="ctb"><b>${esc(t.name)}</b><small>${t.last.from==="admin"?"Anda: ":""}${esc(t.last.text)}</small></span><span class="ctm"><em>${ago(t.last.t)}</em>${t.unread?`<i class="cu">${t.unread}</i>`:""}</span></button>`).join(""):empty("💬","Belum ada obrolan","Pesan dari pelanggan akan muncul di sini.");
   const cv=$("cconv");
   if(!acid){$("chatx").classList.remove("open");cv.dataset.cid="";cv.innerHTML=empty("💬","Pilih percakapan","Ketuk salah satu pelanggan di daftar untuk membalas.");return}
   $("chatx").classList.add("open");
   const th=T.find(t=>t.cid===acid)||ghost(acid);
   if(cv.dataset.cid!==acid){
     cv.dataset.cid=acid;
-    cv.innerHTML=`<div class="cvh"><button type="button" class="cback" data-cback aria-label="Kembali ke daftar">‹</button><span class="av lg">${esc(init(th.name))}</span><div class="cvt"><b>${esc(th.name)}</b><small id="cvsub"></small></div><button type="button" class="btn sm dng cdel" data-cdel>🗑 Hapus</button></div>
-      <div id="aiHolder"></div><div class="cmsgs" id="cmsgs"></div>
+    cv.innerHTML=`<div class="cvh" data-hold="t:${esc(th.cid)}"><button type="button" class="cback" data-cback aria-label="Kembali ke daftar">‹</button><span class="av lg">${esc(init(th.name))}</span><div class="cvt"><b>${esc(th.name)}</b><small id="cvsub"></small></div></div>
+      <div id="aiHolder"></div><div class="cmsgs" id="cmsgs"></div><p class="hhint" style="margin:0;padding:6px 16px 0">Tekan &amp; tahan pesan untuk menghapus.</p>
       <div class="cqr">${QR.map((x,i)=>`<button type="button" data-qr="${i}">${esc(x.replace(/ [🙏✅🍳🛵😊]+$/u,""))}</button>`).join("")}</div>
       <form class="cin" id="cform"><textarea id="cin" rows="1" maxlength="1000" placeholder="Tulis balasan…" aria-label="Balasan"></textarea><button class="btn pri" type="submit">Kirim ➤</button></form>`;
   }
@@ -943,7 +1079,7 @@ function paintConv(th){
   const box=$("cmsgs"),near=box.scrollHeight-box.scrollTop-box.clientHeight<90||!box.dataset.painted;
   let day="",h="";
   for(const m of th.msgs){const d=dayL(m.t);if(d!==day){day=d;h+=`<div class="mday">${esc(d)}</div>`}
-    h+=`<div class="mb ${m.from==="admin"?"a":"c"}">${m.auto?'<em class="mauto">🤖 Balasan otomatis</em>':""}${esc(m.text).replace(/\n/g,"<br>")}<small>${hm(m.t)}<button type="button" class="mdel" data-mdel="${esc(m.id)}" aria-label="Hapus pesan">🗑</button></small></div>`}
+    h+=`<div class="mb ${m.from==="admin"?"a":"c"}" data-hold="m:${esc(m.id)}" tabindex="0">${m.auto?'<em class="mauto">🤖 Balasan otomatis</em>':""}${esc(m.text).replace(/\n/g,"<br>")}<small>${hm(m.t)}</small></div>`}
   box.innerHTML=h||'<div class="mday">Belum ada pesan. Kirim sapaan pertama 👋</div>';
   box.dataset.painted="1";if(near)box.scrollTop=box.scrollHeight;
   if(th.unread>0){CS[th.cid]=th.cust;saveCS();updateBell()}
@@ -1010,7 +1146,7 @@ function askCard(o){
   return new Promise(res=>{
     const w=document.createElement("div"),prev=document.activeElement;
     w.className="ask";w.setAttribute("role","alertdialog");w.setAttribute("aria-modal","true");w.setAttribute("aria-label",o.title);
-    w.innerHTML=`<div class="askc"><div class="aski ${o.tone||""}" aria-hidden="true">${esc(o.icon||"🗑")}</div><h3>${esc(o.title)}</h3><p>${esc(o.text||"")}</p>${o.preview?`<div class="askp">${esc(o.preview)}</div>`:""}<div class="aska"><button type="button" class="btn" data-x="0">Batal</button><button type="button" class="btn ${o.tone==="pri"?"pri":"dngf"}" data-x="1">${esc(o.ok||"Ya, hapus")}</button></div></div>`;
+    w.innerHTML=`<div class="askc"><div class="aski ${o.tone||""}" aria-hidden="true">${esc(o.icon||"!")}</div><h3>${esc(o.title)}</h3><p>${esc(o.text||"")}</p>${o.preview?`<div class="askp">${esc(o.preview)}</div>`:""}<div class="aska"><button type="button" class="btn" data-x="0">Batal</button><button type="button" class="btn ${o.tone==="pri"?"pri":"dngf"}" data-x="1">${esc(o.ok||"Ya, hapus")}</button></div></div>`;
     const key=e=>{if(e.key==="Escape"){e.stopPropagation();done(false)}};
     const done=v=>{document.removeEventListener("keydown",key,true);w.classList.add("out");setTimeout(()=>{w.remove();prev&&prev.focus&&prev.focus({preventScroll:true})},170);res(v)};
     w.addEventListener("click",e=>{if(e.target===w)return done(false);const b=e.target.closest("[data-x]");if(b)done(b.dataset.x==="1")});
@@ -1022,6 +1158,50 @@ function syncSold(){
   const m={};O.forEach(o=>{if((o.status||"")===STAT[4])(o.items||[]).forEach(i=>{m[i.id]=(m[i.id]||0)+(+i.qty||0)})});
   let ch=false;P.forEach(p=>{const n=m[p.id]||0;if(n>(+p.sold||0)){p.sold=n;ch=true}});
   if(ch&&saveP())sig=KS();
+}
+
+/* ---------- Tekan-tahan untuk menghapus ---------- */
+let hTimer=0,hSup=0,hSX=0,hSY=0,hMenu=null,hTarget=null;
+document.body.classList.toggle("nohint",!!getPref("holdhint",false));
+function hClose(){if(hMenu){hMenu.remove();hMenu=null}hTarget=null;document.querySelectorAll(".holding,.hsel").forEach(x=>x.classList.remove("holding","hsel"))}
+function hCancel(){clearTimeout(hTimer);hTimer=0;document.querySelectorAll(".holding").forEach(x=>x.classList.remove("holding"))}
+function hOpen(el,x,y){
+  if(hMenu&&hTarget===el.dataset.hold)return;
+  hClose();hTarget=el.dataset.hold;el.classList.add("hsel");
+  const m=document.createElement("div");m.className="hm";m.setAttribute("role","menu");
+  m.innerHTML='<button type="button" role="menuitem" data-hdel>Hapus</button>';
+  document.body.appendChild(m);hMenu=m;
+  const w=m.offsetWidth,h=m.offsetHeight;
+  const l=Math.min(Math.max(8,x-w/2),innerWidth-w-8);let t=y-h-16;if(t<8)t=Math.min(y+18,innerHeight-h-8);
+  m.style.left=l+"px";m.style.top=t+"px";
+  try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}
+  setPref("holdhint",true);document.body.classList.add("nohint");
+  m.querySelector("button").focus({preventScroll:true});
+}
+document.addEventListener("pointerdown",e=>{
+  if(hMenu&&!e.target.closest(".hm"))hClose();
+  const h=e.target.closest("[data-hold]");if(!h||(e.pointerType==="mouse"&&e.button!==0))return;
+  const inter=e.target.closest("button,a,input,textarea,select");if(inter&&inter!==h)return;
+  hCancel();hSX=e.clientX;hSY=e.clientY;h.classList.add("holding");
+  hTimer=setTimeout(()=>{hTimer=0;h.classList.remove("holding");hSup=Date.now();hOpen(h,hSX,hSY)},480);
+},{passive:true});
+document.addEventListener("pointermove",e=>{if(hTimer&&Math.hypot(e.clientX-hSX,e.clientY-hSY)>10)hCancel()},{passive:true});
+["pointerup","pointercancel"].forEach(ev=>document.addEventListener(ev,hCancel,{passive:true,capture:true}));
+document.addEventListener("scroll",()=>{hCancel();if(hMenu)hClose()},{passive:true,capture:true});
+addEventListener("resize",()=>{hCancel();hClose()});
+document.addEventListener("click",e=>{if(Date.now()-hSup<700&&e.target.closest&&e.target.closest("[data-hold]")){e.stopImmediatePropagation();e.preventDefault();hSup=0}},true);
+document.addEventListener("contextmenu",e=>{const h=e.target.closest&&e.target.closest("[data-hold]");if(!h)return;e.preventDefault();hCancel();hSup=Date.now();const r=h.getBoundingClientRect();hOpen(h,e.clientX||r.left+r.width/2,e.clientY||r.top+10)});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&hMenu){hClose();return}
+  const h=e.target.closest&&e.target.closest("[data-hold]");
+  if(h&&!e.target.matches("textarea,input")&&(e.key==="Delete"||e.key==="ContextMenu"||(e.key==="F10"&&e.shiftKey))){e.preventDefault();const r=h.getBoundingClientRect();hOpen(h,r.left+r.width/2,r.top+8)}
+});
+function delMsg(id){loadC();C=C.filter(x=>x.id!==id);wr(K.c,C);rChat();updateBell();toast("Pesan dihapus.")}
+function delThread(cid){
+  const th=threads().find(x=>x.cid===cid)||ghost(cid);
+  askCard({icon:"!",title:"Hapus obrolan ini?",text:`Seluruh pesan dengan ${th.name} akan dihapus, juga dari sisi pelanggan.`,preview:`${th.msgs.length} pesan`,ok:"Ya, hapus"}).then(ok=>{
+    if(!ok)return;loadC();C=C.filter(x=>x.cid!==cid);wr(K.c,C);delete CS[cid];saveCS();
+    if(acid===cid){acid=null;$("cconv").dataset.cid=""}rChat();updateBell();toast("Obrolan dihapus.")});
 }
 
 /* ---------- Penanganan klik antarmuka baru ---------- */
@@ -1040,12 +1220,7 @@ function uiClick(t){
   if(d.chato){const o=O.find(x=>x.id===d.chato);if(o){go("chat");openThread(o.uid||o.cid)}return true}
   if(d.aisend){const o=O.find(x=>x.id===d.aisend),cid=o&&(o.uid||o.cid);
     if(o&&cid&&sendAdmin(cid,analyzeOrder(o).reply))notify({type:"ok",title:"Balasan terkirim",text:"Masuk ke obrolan "+(o.name||"pelanggan"),action:{label:"Buka obrolan",fn(){go("chat");openThread(cid)}}});return true}
-  if(d.cdel!==undefined){const th=threads().find(x=>x.cid===acid)||ghost(acid),cid=acid;
-    askCard({icon:"🗑",title:"Hapus obrolan ini?",text:`Seluruh pesan dengan ${th.name} akan dihapus, juga dari sisi pelanggan.`,preview:`${th.msgs.length} pesan`,ok:"Ya, hapus"}).then(ok=>{
-      if(!ok)return;loadC();C=C.filter(x=>x.cid!==cid);wr(K.c,C);delete CS[cid];saveCS();acid=null;$("cconv").dataset.cid="";rChat();updateBell();toast("Obrolan dihapus.")});return true}
-  if(d.mdel){const id=d.mdel,m=C.find(x=>x.id===id);
-    askCard({icon:"🗑",title:"Hapus pesan ini?",text:"Pesan juga akan hilang dari sisi pelanggan.",preview:m?m.text.slice(0,90):"",ok:"Ya, hapus"}).then(ok=>{
-      if(!ok)return;loadC();C=C.filter(x=>x.id!==id);wr(K.c,C);rChat();updateBell();toast("Pesan dihapus.")});return true}
+  if(d.hdel!==undefined){const k=hTarget;hClose();if(!k)return true;const ty=k.slice(0,1),id=k.slice(2);ty==="m"?delMsg(id):delThread(id);return true}
   if(d.rvf!==undefined){rvf=+d.rvf;rReviews();return true}
   if(d.rvreply){const f=$("rf-"+d.rvreply);if(f){f.hidden=!f.hidden;if(!f.hidden)$("rr-"+d.rvreply).focus()}return true}
   if(d.rvsend){const r=R.find(x=>x.id===d.rvsend),v=$("rr-"+d.rvsend).value.trim().slice(0,500);
@@ -1114,5 +1289,11 @@ lockUI();
 <script>window.JK_ROLE="admin"</script>
 <script type="module" src="firebase-sync.js"></script>
 <script src="warungku-auth.js" data-role="admin"></script>
+<script>
+/* cegah zoom cubit / ketuk-ganda (iOS Safari mengabaikan user-scalable) */
+["gesturestart","gesturechange","gestureend"].forEach(n=>document.addEventListener(n,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{if(e.touches&&e.touches.length>1&&e.cancelable)e.preventDefault()},{passive:false});
+document.addEventListener("wheel",e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+</script>
 </body>
 </html>
