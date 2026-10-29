@@ -62,7 +62,7 @@ const regFields = (ADM
   + fld("rWa", "Nomor WhatsApp", "tel", "08xxxxxxxxxx", 'inputmode="tel" autocomplete="tel"')
   + fld("rEmail", "Gmail", "email", "nama@gmail.com", 'autocomplete="email" inputmode="email"')
   + pw("rPass", "Kata sandi", "new-password")
-  + (ADM ? "" : `<div class="wk-face" id="faceRow"><span class="wk-fi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9.5 15c1.5 1.3 3.5 1.3 5 0"/></svg></span><span class="wk-ft"><b>Verifikasi wajah</b><small id="faceTxt">Foto wajahmu dikirim ke pusat untuk verifikasi dan jadi foto profil. Dengan menekan Mulai, kamu setuju.</small></span><button type="button" class="wk-fb" id="faceBtn">Mulai</button></div>`);
+  + (`<div class="wk-face" id="faceRow"><span class="wk-fi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9.5 15c1.5 1.3 3.5 1.3 5 0"/></svg></span><span class="wk-ft"><b>Verifikasi wajah</b><small id="faceTxt">${ADM ? "Foto wajahmu dikirim ke pusat untuk verifikasi. Dengan menekan Mulai, kamu setuju." : "Foto wajahmu dikirim ke pusat untuk verifikasi dan jadi foto profil. Dengan menekan Mulai, kamu setuju."}</small></span><button type="button" class="wk-fb" id="faceBtn">Mulai</button></div>`);
 
 const root = document.createElement("div");
 root.id = "wk-auth";
@@ -93,7 +93,18 @@ root.innerHTML = `
     ${pw("lPass", "Kata sandi", "current-password").replace("Minimal 6 karakter", "Kata sandi")}
     <div class="wk-err" id="eLog" role="alert"></div>
     <button class="wk-btn" id="bLog">Masuk</button>
+    <button type="button" class="wk-lnk dk" data-go="forgot">Lupa kata sandi?</button>
     <button type="button" class="wk-lnk dk" data-go="reg">Belum punya akun? <b>Daftar</b></button>
+  </form>
+</section>
+<section class="wk-s" data-s="forgot">
+  <img class="wk-logo sm" src="logo.png" alt="">
+  <form class="wk-card" id="fFor" novalidate>
+    <h2>Lupa kata sandi</h2><p class="wk-sub dk">Masukkan Gmail atau nomor WhatsApp. Tautan untuk membuat kata sandi baru dikirim ke Gmail-mu.</p>
+    ${fld("fId", "Gmail / Nomor WhatsApp", "text", "nama@gmail.com atau 08xx", 'autocomplete="username" autocapitalize="none"')}
+    <div class="wk-err" id="eFor" role="alert"></div>
+    <button class="wk-btn" id="bFor">Kirim tautan</button>
+    <button type="button" class="wk-lnk dk" data-go="log">Kembali ke halaman masuk</button>
   </form>
 </section>
 <section class="wk-s" data-s="pend">
@@ -136,7 +147,7 @@ function snap(vid, b) {  // potong persegi di sekitar wajah
   const sx = Math.min(Math.max(0, b.x + b.width / 2 - side / 2), vid.videoWidth - side), sy = Math.min(Math.max(0, b.y + b.height / 2 - side / 2), vid.videoHeight - side);
   c.width = c.height = 320; c.getContext("2d").drawImage(vid, sx, sy, side, side, 0, 0, 320, 320); return c;
 }
-if (!ADM) {
+{
   const ov = document.createElement("div");
   ov.id = "wk-face"; ov.hidden = true; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Verifikasi wajah");
   ov.innerHTML = `<button type="button" class="wk-fx" id="faceX" aria-label="Tutup">&times;</button>
@@ -228,7 +239,7 @@ if (!ADM) {
             }
             faceShot = c.toDataURL("image/jpeg", .82);
             const t = document.createElement("canvas"); t.width = t.height = 128; t.getContext("2d").drawImage(c, 0, 0, 128, 128); faceThumb = t.toDataURL("image/jpeg", .75);
-            $("faceBox").className = "wk-fv ok"; setMsg("Verifikasi berhasil", "Foto diambil dan jadi foto profilmu."); say("Verifikasi berhasil.");
+            $("faceBox").className = "wk-fv ok"; setMsg("Verifikasi berhasil", ADM ? "Foto diambil dan dikirim ke pusat." : "Foto diambil dan jadi foto profilmu."); say("Verifikasi berhasil.");
             await new Promise(res => setTimeout(res, 900));
             if (my !== run) return;
             faceOK = true; faceSkipped = false; closeFace(); paintFace(); return;
@@ -244,7 +255,7 @@ if (!ADM) {
     const row = $("faceRow"), ok = faceOK || faceSkipped;
     row.classList.toggle("ok", faceOK); row.classList.toggle("skip", faceSkipped);
     if (ok && $("eReg")) $("eReg").textContent = "";
-    $("faceTxt").textContent = faceOK ? "Wajah terverifikasi" : faceSkipped ? "Dilewati (pendeteksi tidak tersedia)" : "Foto wajahmu dikirim ke pusat untuk verifikasi dan jadi foto profil. Dengan menekan Mulai, kamu setuju.";
+    $("faceTxt").textContent = faceOK ? "Wajah terverifikasi" : faceSkipped ? "Dilewati (pendeteksi tidak tersedia)" : (ADM ? "Foto wajahmu dikirim ke pusat untuk verifikasi. Dengan menekan Mulai, kamu setuju." : "Foto wajahmu dikirim ke pusat untuk verifikasi dan jadi foto profil. Dengan menekan Mulai, kamu setuju.");
     $("faceBtn").textContent = ok ? "Ulangi" : "Mulai";
   }
   $("faceBtn").addEventListener("click", startFace);
@@ -290,8 +301,10 @@ const busy = (b, on, t) => { b.disabled = on; b.textContent = on ? "Mohon tunggu
 function finish(a) {
   wr(SK, { email: a.email, t: Date.now() });
   if (ADM) {
-    const s = rd(SET, {});
-    wr(SET, { ...s, shopName: a.shop || s.shopName, whatsapp: a.wa || s.whatsapp, address: a.address || s.address, logo: a.logo || s.logo || "" });
+    if (!(window.JK && JK.login)) {   // mode lokal saja; dengan Firebase, data toko diambil dari server
+      const s = rd(SET, {});
+      wr(SET, { ...s, shopName: a.shop || s.shopName, whatsapp: a.wa || s.whatsapp, address: a.address || s.address, logo: a.logo || s.logo || "" });
+    }
   } else {
     const p = rd(PRO, {});
     wr(PRO, { ...p, name: a.name || p.name || "", phone: a.phone || a.wa || p.phone || "", address: a.address || p.address || "", photo: a.photo || p.photo || "" });
@@ -302,15 +315,16 @@ function finish(a) {
 $("fReg").addEventListener("submit", async e => {
   e.preventDefault();
   const v = id => $(id).value.trim(), b = $("bReg"), er = $("eReg");
-  const a = { name: v("rName"), shop: ADM ? v("rName") : "", address: v("rAddr"), phone: v("rWa"), wa: nw(v("rWa")), email: v("rEmail").toLowerCase(), logo: ADM ? logo : "", photo: ADM ? "" : faceThumb };
+  const a = { name: v("rName"), shop: ADM ? v("rName") : "", address: v("rAddr"), phone: v("rWa"), wa: nw(v("rWa")), email: v("rEmail").toLowerCase(), logo: ADM ? logo : "", photo: faceThumb };
   const pass = $("rPass").value;
   er.textContent = "";
   if (!a.name) return er.textContent = ADM ? "Nama warung wajib diisi." : "Nama wajib diisi.";
   if (!a.address) return er.textContent = "Alamat wajib diisi.";
   if (a.wa.length < 10 || a.wa.length > 15) return er.textContent = "Nomor WhatsApp belum benar.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email)) return er.textContent = "Format Gmail belum benar.";
+  if (ADM && !/@gmail\.com$/.test(a.email)) return er.textContent = "Penjual mendaftar dengan Gmail (@gmail.com).";
   if (pass.length < 6) return er.textContent = "Kata sandi minimal 6 karakter.";
-  if (!ADM && FACE.required && !faceOK && !faceSkipped) {
+  if (FACE.required && !faceOK && !faceSkipped) {
     er.textContent = "Verifikasi wajah dulu ya. Ketuk tombol Mulai.";
     const row = $("faceRow"); row.classList.add("need"); row.scrollIntoView({ block: "center", behavior: "smooth" });
     setTimeout(() => row.classList.remove("need"), 1200); return;
@@ -319,7 +333,7 @@ $("fReg").addEventListener("submit", async e => {
   try {
     if (window.JK && JK.register) {
       const { logo: _l, ...prof } = a;
-      await JK.register(a.email, pass, { ...prof, face: ADM ? "" : faceOK ? "ok" : faceSkipped ? "skip" : "none", hasKyc: !ADM && !!faceShot }, !ADM && faceShot ? { selfie: faceShot } : null);
+      await JK.register(a.email, pass, { ...prof, face: faceOK ? "ok" : faceSkipped ? "skip" : "none", hasKyc: !!faceShot }, faceShot ? { selfie: faceShot } : null);
       busy(b, false, "Daftar"); show("pend"); return;
     } else {
       const list = rd(AK, []);
@@ -330,6 +344,18 @@ $("fReg").addEventListener("submit", async e => {
     if (!ADM) wr("wk_face_ok", { ok: faceOK, skipped: faceSkipped, t: Date.now() });
     finish(a);
   } catch (x) { er.textContent = fbErr(x); busy(b, false, "Daftar"); }
+});
+
+$("fFor").addEventListener("submit", async e => {
+  e.preventDefault();
+  const id = $("fId").value.trim().toLowerCase(), b = $("bFor"), er = $("eFor");
+  er.style.color = ""; er.textContent = "";
+  if (!id) return er.textContent = "Isi Gmail atau nomor WhatsApp.";
+  if (!(window.JK && JK.reset)) return er.textContent = "Lupa kata sandi butuh koneksi ke server. Coba lagi saat online.";
+  busy(b, true);
+  try { await JK.reset(id); er.style.color = "#16864a"; er.textContent = "Jika akun ditemukan, tautan reset sudah dikirim ke Gmail-nya. Cek juga folder Spam."; }
+  catch (x) { er.textContent = fbErr(x); }
+  busy(b, false, "Kirim tautan");
 });
 
 $("fLog").addEventListener("submit", async e => {
