@@ -4,7 +4,7 @@
 //  2) Dipakai bersama oleh index.html (pelanggan) dan admin.html
 // ============================================================
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInAnonymously,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,onAuthStateChanged,signInAnonymously,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getDatabase,ref,set,get,remove,onValue,query,orderByChild,equalTo} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -25,7 +25,7 @@ if (firebaseConfig.apiKey.startsWith("ISI_")) {
 
 function start() {
   const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getDatabase(app);
-  let applying = false, remote = new Map(), subscribed = false, offs = [];
+  let ready = {p: false, s: false}, applying = false, remote = new Map(), subscribed = false, offs = [];
   let remoteChat = new Map(), remoteRev = new Map();
   const warn = e => { console.warn(e); window.toast && window.toast("Gagal sinkron: " + (e.code || e.message)); };
 
@@ -56,6 +56,7 @@ function start() {
       }
       if (ADMIN) for (const id of remote.keys()) if (!ids.has(id)) remove(ref(db, "orders/" + id)).catch(warn);
     } else if (ADMIN && (k === KEY.products || k === KEY.settings)) {
+      if (!(k === KEY.products ? ready.p : ready.s)) return;   // tunggu data server dulu
       set(ref(db, k === KEY.products ? "products" : "settings"), d).catch(warn);
     } else if (k === KEY.chats && Array.isArray(d)) {
       // Obrolan: pesan tidak pernah diubah, jadi cukup kirim pesan yang belum ada di server.
@@ -85,12 +86,12 @@ function start() {
     if (subscribed) return; subscribed = true;
     const u = auth.currentUser;
     offs.push(onValue(ref(db, "products"), s => {
-      const v = s.val();
+      const v = s.val(); ready.p = true;
       if (v == null) { ADMIN && window.seedRemote && window.seedRemote("p"); return; }
       apply(KEY.products, Object.values(v));
     }, warn));
     offs.push(onValue(ref(db, "settings"), s => {
-      const v = s.val();
+      const v = s.val(); ready.s = true;
       if (v == null) { ADMIN && window.seedRemote && window.seedRemote("s"); return; }
       apply(KEY.settings, v);
     }, warn));
@@ -183,9 +184,14 @@ function start() {
         return {...p, email};
       } finally { busy = false; }
     },
+    async reset(id) {   // kirim tautan atur ulang kata sandi ke Gmail (bisa lewat nomor WA)
+      let email = String(id).trim().toLowerCase();
+      if (!email.includes("@")) { const s = await get(ref(db, "phones/" + nw(email))); if (!s.exists()) return; email = s.val(); }
+      try { await sendPasswordResetEmail(auth, email); } catch (e) { if (e.code !== "auth/user-not-found") throw e; }
+    },
     device(d) {
       const u = auth.currentUser; if (!u || u.isAnonymous) return;
-      set(ref(db, "devices/" + u.uid), {...d, role: ADMIN ? "admin" : "customer", t: Date.now()}).catch(() => {});
+      set(ref(db, "devices/" + u.uid + "/" + String(d.did || "x").replace(/[^\w-]/g, "")), {...d, role: ADMIN ? "admin" : "customer", t: Date.now()}).catch(() => {});
     },
     report(ev) {
       const u = auth.currentUser; if (!u) return;
