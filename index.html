@@ -3390,5 +3390,6 @@ initApp();
 ["gesturestart","gesturechange","gestureend"].forEach(n=>document.addEventListener(n,e=>e.preventDefault(),{passive:false}));
 document.addEventListener("wheel",e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
 </script>
+<script>try{var _p=JSON.parse(localStorage.getItem("jk3d_profile_v1")||"{}");if(/^data:image\//.test(_p.photo||"")){var _f=function(){var a=document.querySelector(".profile-avatar");if(a&&a.dataset.ph!=="1"){a.dataset.ph="1";a.textContent="";a.style.background="url("+_p.photo+") center/cover"}};_f();new MutationObserver(_f).observe(document.body,{childList:true,subtree:true})}}catch(e){}</script>
 </body>
 </html>

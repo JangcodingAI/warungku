@@ -151,12 +151,13 @@ function start() {
   // Daftar / masuk akun (Gmail atau nomor WhatsApp)
   const nw = p => { p = String(p).replace(/\D/g, ""); return p[0] === "0" ? "62" + p.slice(1) : p[0] === "8" ? "62" + p : p; };
   window.JK = {
-    async register(email, pass, prof) {
+    async register(email, pass, prof, kyc) {
       busy = true;
       try {
         const c = await createUserWithEmailAndPassword(auth, email, pass);
         await set(ref(db, "users/" + c.user.uid), {...prof, email, role: ADMIN ? "admin" : "customer", status: "pending", createdAt: Date.now()});
         await set(ref(db, "phones/" + nw(prof.wa)), email);
+        if (kyc) await set(ref(db, "kyc/" + c.user.uid), {...kyc, t: Date.now()});
         await signOut(auth);   // belum boleh masuk sebelum disetujui pusat
       } finally { busy = false; }
       if (!ADMIN) signInAnonymously(auth).catch(warn);

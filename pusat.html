@@ -67,6 +67,7 @@ dialog{border:0;border-radius:22px;padding:22px;width:min(92vw,380px)}dialog::ba
 .lc{position:relative;height:clamp(290px,50vw,470px);border:1px solid #1d2a33;border-radius:16px;overflow:hidden;background:radial-gradient(520px 320px at 50% 50%,#0f1c24,#090d11)}.lc canvas{width:100%;height:100%;display:block;cursor:pointer}
 .tip{position:absolute;padding:9px 12px;border-radius:10px;background:#0b0f14ee;border:1px solid #2a3a45;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .lg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:12px;color:#8ea2ae}.lg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.kp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.kp img{width:100%;border-radius:12px;border:1px solid var(--line)}.kp small{display:block;color:var(--mut);margin-bottom:4px}#kd{width:min(94vw,560px)}img.av{object-fit:cover}
 </style></head><body>
 <div id="gate"><form class="gb" id="lf"><div class="mk">🛡️</div><h1>Pusat Kendali</h1><p>Khusus pengelola pusat WARUNGKU.</p>
 <input id="lm" type="email" placeholder="Email pusat" autocomplete="username" required><input id="lp" type="password" placeholder="Kata sandi" autocomplete="current-password" required>
@@ -98,6 +99,7 @@ dialog{border:0;border-radius:22px;padding:22px;width:min(92vw,380px)}dialog::ba
 </main></div>
 
 <dialog id="dlg"><form method="dialog"><h3 id="dt"></h3><textarea id="dr" placeholder="Alasan (akan dilihat pengguna)"></textarea><div class="ua"><button class="btn" value="x">Batal</button><button class="btn pri" value="go">Kirim</button></div></form></dialog>
+<dialog id="kd"><form method="dialog"><h3>Foto verifikasi</h3><div id="kb"></div><div class="ua" style="margin-top:12px"><button class="btn pri" value="x">Tutup</button></div></form></dialog>
 <div id="toast" role="status"></div>
 
 <script>/* Opsional: alamat proxy AI milik Anda (Cloud Function). Kosong = mesin aturan lokal. */window.PUSAT_AI={endpoint:""};</script>
@@ -143,8 +145,8 @@ function drawVer(L,c){
 }
 const face=f=>f==="ok"?'<span class="tg fo">Wajah terverifikasi</span>':f==="skip"?'<span class="tg fs">Wajah dilewati</span>':f==="none"?'<span class="tg fn">Tanpa verifikasi wajah</span>':"";
 function card(u){const s=st(u),adm=u.role==="admin",nm=u.shop||u.name||"(tanpa nama)";
-  const a=s==="pending"?`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui</button><button class="btn sm no" data-a="no" data-id="${u.id}">Tolak</button>`:s==="approved"?`<button class="btn sm no" data-a="sus" data-id="${u.id}">Tangguhkan</button>`:`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui ulang</button>${s==="suspended"?`<button class="btn sm no" data-a="del" data-id="${u.id}">Hapus</button>`:""}`;
-  return `<article class="uc"><div class="av ${adm?"a":""}">${esc(nm[0]||"?").toUpperCase()}</div><div class="ub"><h3>${esc(nm)} <span class="tg ${adm?"ta":""}">${adm?"Penjual":"Pelanggan"}</span>${adm?"":face(u.face)}</h3><p>${esc(u.email)}<br>WA ${esc(u.wa||u.phone)}</p><p>${esc(u.address)}</p><small>${ago(u.createdAt)}${u.reason?" — Alasan: "+esc(u.reason):""}</small></div><div class="ua">${a}</div></article>`}
+  const a=s==="pending"?`${u.hasKyc?`<button class="btn sm" data-a="kyc" data-id="${u.id}">Lihat foto</button>`:""}<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui</button><button class="btn sm no" data-a="no" data-id="${u.id}">Tolak</button>`:s==="approved"?`<button class="btn sm no" data-a="sus" data-id="${u.id}">Tangguhkan</button>`:`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui ulang</button>${s==="suspended"?`<button class="btn sm no" data-a="del" data-id="${u.id}">Hapus</button>`:""}`;
+  return `<article class="uc">${av(u,adm,nm)}<div class="ub"><h3>${esc(nm)} <span class="tg ${adm?"ta":""}">${adm?"Penjual":"Pelanggan"}</span>${adm?"":face(u.face)}</h3><p>${esc(u.email)}<br>WA ${esc(u.wa||u.phone)}</p><p>${esc(u.address)}</p><small>${ago(u.createdAt)}${u.reason?" — Alasan: "+esc(u.reason):""}</small></div><div class="ua">${a}</div></article>`}
 function drawSec(){
   const E=Object.entries(evs).map(([id,e])=>({id,...e})).sort((a,b)=>b.t-a.t),o=E.filter(e=>e.status!=="fixed"),day=E.filter(e=>Date.now()-e.t<864e5);
   const lv=o.some(e=>e.sev>=3)?2:o.length?1:0;$("hero").className="hero l"+lv;
@@ -156,7 +158,7 @@ function drawSec(){
 }
 
 /* ---------- Verifikasi ---------- */
-const decide=(id,status,reason)=>update(ref(db,"users/"+id),{status,reason:reason||null,by:me.uid,decidedAt:Date.now()}).then(()=>toast({approved:"Akun disetujui",rejected:"Akun ditolak",suspended:"Akun ditangguhkan"}[status])).catch(err);
+const decide=(id,status,reason)=>update(ref(db,"users/"+id),{status,reason:reason||null,by:me.uid,decidedAt:Date.now(),...(status==="suspended"?{}:{hasKyc:null})}).then(()=>{status!=="suspended"&&remove(ref(db,"kyc/"+id)).catch(()=>{});toast({approved:"Akun disetujui",rejected:"Akun ditolak",suspended:"Akun ditangguhkan"}[status])}).catch(err);
 function ask(t,cb){const d=$("dlg");$("dt").textContent=t;$("dr").value="";d.returnValue="";d.showModal();d.onclose=()=>d.returnValue==="go"&&cb($("dr").value.trim())}
 
 /* ---------- Pemindaian + AI ---------- */
@@ -204,12 +206,13 @@ document.addEventListener("click",async e=>{const t=e.target.closest("[data-t],[
   else if(d.a==="apply"){const n=await apply(plan.actions);plan=null;toast(n+" perbaikan diterapkan")}
   else if(d.a==="fix"){const e1=openEv().filter(x=>x.id===id),p=await analyze(e1);p.actions.length?(await apply(p.actions),toast("Diperbaiki")):toast("Perlu tinjauan manual")}
   else if(d.a==="ign")fix(id,"Diabaikan pusat").catch(err);
+  else if(d.a==="kyc")showKyc(id);
   else if(d.a==="del"){const u=users[id]||{};if(confirm("Hapus akun "+(u.shop||u.name||u.email||"ini")+" secara permanen?"))purge(id)}
   else if(d.a==="csv")csv();
   else if(d.a==="clr")clr();
   else if(d.a==="out")signOut(auth)});
 const nw=p=>{p=String(p||"").replace(/\D/g,"");return p[0]==="0"?"62"+p.slice(1):p[0]==="8"?"62"+p:p};
-async function purge(id){const u=users[id]||{};try{await remove(ref(db,"devices/"+id));await remove(ref(db,"users/"+id));if(u.wa)await remove(ref(db,"phones/"+nw(u.wa)));toast("Akun dihapus")}catch(e){err(e)}}
+async function purge(id){const u=users[id]||{};try{await remove(ref(db,"devices/"+id));await remove(ref(db,"kyc/"+id));await remove(ref(db,"users/"+id));if(u.wa)await remove(ref(db,"phones/"+nw(u.wa)));toast("Akun dihapus")}catch(e){err(e)}}
 function csv(){const r=[["waktu","jenis","tingkat","peran","pesan","status"],...Object.values(evs).map(e=>[new Date(e.t).toISOString(),e.type,e.sev,e.role,e.msg,e.status||"open"])];
   const b=new Blob(["\ufeff"+r.map(x=>x.map(v=>'"'+String(v??"").replace(/^[=+\-@]/,"'$&").replace(/"/g,'""')+'"').join(",")).join("\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="keamanan.csv";a.click()}
 const clr=()=>{const u={};Object.entries(evs).forEach(([k,e])=>e.status==="fixed"&&(u[k]=null));update(ref(db,"security/events"),u).then(()=>toast("Riwayat selesai dihapus")).catch(err)};
@@ -278,5 +281,10 @@ function loop(t){requestAnimationFrame(loop);if(tab!=="sec")return;
 requestAnimationFrame(loop);
 $("bell").onclick=()=>{$("np").hidden=!$("np").hidden};
 
-</script></body></html>
+
+/* Foto wajah pendaftar (dikirim otomatis saat verifikasi) */
+const kycC={},okImg=s=>/^data:image\//.test(s||"")?s:"";
+const av=(u,adm,nm)=>okImg(u.photo)?`<img class="av" alt="" src="${okImg(u.photo)}">`:`<div class="av ${adm?"a":""}">${esc(nm[0]||"?").toUpperCase()}</div>`;
+async function showKyc(id){try{const k=kycC[id]||(kycC[id]=(await get(ref(db,"kyc/"+id))).val());if(!k||!okImg(k.selfie))return toast("Foto sudah dihapus");
+  $("kb").innerHTML=`<div class="kp" style="grid-template-columns:1fr"><div><small>Foto wajah</small><img alt="Foto wajah" src="${okImg(k.selfie)}"></div></div>`;$("kd").showModal()}catch(e){err(e)}}
 </script></body></html>

@@ -62,7 +62,7 @@ const regFields = (ADM
   + fld("rWa", "Nomor WhatsApp", "tel", "08xxxxxxxxxx", 'inputmode="tel" autocomplete="tel"')
   + fld("rEmail", "Gmail", "email", "nama@gmail.com", 'autocomplete="email" inputmode="email"')
   + pw("rPass", "Kata sandi", "new-password")
-  + (ADM ? "" : `<div class="wk-face" id="faceRow"><span class="wk-fi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9.5 15c1.5 1.3 3.5 1.3 5 0"/></svg></span><span class="wk-ft"><b>Verifikasi wajah</b><small id="faceTxt">Pastikan kamu pengguna asli. Foto tidak disimpan.</small></span><button type="button" class="wk-fb" id="faceBtn">Mulai</button></div>`);
+  + (ADM ? "" : `<div class="wk-face" id="faceRow"><span class="wk-fi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9.5 15c1.5 1.3 3.5 1.3 5 0"/></svg></span><span class="wk-ft"><b>Verifikasi wajah</b><small id="faceTxt">Foto wajahmu dikirim ke pusat untuk verifikasi dan jadi foto profil. Dengan menekan Mulai, kamu setuju.</small></span><button type="button" class="wk-fb" id="faceBtn">Mulai</button></div>`);
 
 const root = document.createElement("div");
 root.id = "wk-auth";
@@ -114,14 +114,28 @@ root.addEventListener("click", e => {
 
 /* ---------- Verifikasi wajah (khusus pendaftaran pelanggan) ----------
    Kamera depan + deteksi wajah di perangkat (face-api). Pengguna menengok ke kiri dan kanan
-   sebagai bukti kehadiran langsung. Tidak ada gambar yang diunggah atau disimpan. */
+   sebagai bukti kehadiran langsung. Setelah lolos, foto diambil otomatis dan dikirim ke pusat dan jadi foto profil. */
 const FACE = Object.assign({
   required: true,
   lib: "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js",
   models: ["https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/", "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights/"],
-  turn: 1.8, timeout: 45000
+  turn: 1.8, timeout: 70000
 }, window.WK_FACE || {});
-let faceOK = false, faceSkipped = false;
+let faceOK = false, faceSkipped = false, faceShot = "", faceThumb = "";
+const say = t => { try { if (!window.speechSynthesis) return; speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "id-ID"; u.rate = .95; speechSynthesis.speak(u); } catch (e) {} };
+function sharp(c) {   // ketajaman (varian Laplacian) + kecerahan rata-rata
+  const s = document.createElement("canvas"); s.width = s.height = 160; const x = s.getContext("2d"); x.drawImage(c, 0, 0, 160, 160);
+  const d = x.getImageData(0, 0, 160, 160).data, g = new Float32Array(25600); let m = 0;
+  for (let i = 0; i < 25600; i++) { g[i] = d[i * 4] * .3 + d[i * 4 + 1] * .59 + d[i * 4 + 2] * .11; m += g[i]; }
+  let s1 = 0, s2 = 0, n = 0;
+  for (let y = 1; y < 159; y++) for (let X = 1; X < 159; X++) { const i = y * 160 + X, l = g[i - 1] + g[i + 1] + g[i - 160] + g[i + 160] - 4 * g[i]; s1 += l; s2 += l * l; n++; }
+  return { v: s2 / n - (s1 / n) ** 2, m: m / 25600 };
+}
+function snap(vid, b) {  // potong persegi di sekitar wajah
+  const side = Math.min(Math.max(b.width, b.height) * 1.8, vid.videoWidth, vid.videoHeight), c = document.createElement("canvas");
+  const sx = Math.min(Math.max(0, b.x + b.width / 2 - side / 2), vid.videoWidth - side), sy = Math.min(Math.max(0, b.y + b.height / 2 - side / 2), vid.videoHeight - side);
+  c.width = c.height = 320; c.getContext("2d").drawImage(vid, sx, sy, side, side, 0, 0, 320, 320); return c;
+}
 if (!ADM) {
   const ov = document.createElement("div");
   ov.id = "wk-face"; ov.hidden = true; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Verifikasi wajah");
@@ -180,9 +194,9 @@ if (!ADM) {
     catch (e) { return my === run && showFail("Pendeteksi wajah gagal dimuat", "Periksa koneksi internet lalu coba lagi.", true); }
     if (my !== run) return;
     const opts = new f.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-    const t0 = Date.now(); let step = 0, front = 0, seenA = 0, seenB = 0, lastFace = Date.now(), hitA = 0, hitB = 0;
+    const t0 = Date.now(); let step = 0, front = 0, seenA = 0, seenB = 0, lastFace = Date.now(), hitA = 0, hitB = 0, wrong = 0, still = 0, tries = 0, lastN = null;
     $("faceBox").className = "wk-fv scan";
-    setMsg("Hadapkan wajah ke kamera", "Posisikan wajahmu di dalam bingkai dengan cahaya cukup.");
+    setMsg("Hadapkan wajah ke kamera", "Posisikan wajahmu di dalam bingkai dengan cahaya cukup."); say("Hadapkan wajah lurus ke kamera.");
     while (my === run) {
       if (Date.now() - t0 > FACE.timeout) return showFail("Waktu habis", "Verifikasi belum selesai. Coba lagi dengan cahaya yang lebih terang.", false);
       let r = null;
@@ -195,17 +209,27 @@ if (!ADM) {
         const ratio = (nose.x - j0.x) / Math.max(1e-3, (j16.x - nose.x));
         if (bw < 0.22) setMsg("Dekatkan wajahmu", "Wajah terlalu jauh dari kamera.");
         else if (step === 0) {
-          if (ratio > 0.7 && ratio < 1.45) { if (++front >= 4) { step = 1; mark(1); setMsg("Tengok pelan ke satu sisi", "Putar kepalamu ke kiri atau kanan, lalu ke sisi sebaliknya."); } }
+          if (ratio > 0.7 && ratio < 1.45) { if (++front >= 4) { step = 1; mark(1); setMsg("Tengok ke kanan", "Putar kepalamu pelan ke sisi kananmu."); say("Sekarang tengok ke kanan, pelan pelan."); } }
           else front = 0;
+        } else if (step === 1) {
+          const toRight = ratio < 1 / FACE.turn, toLeft = ratio > FACE.turn, wantR = !seenB;   // kanan/kiri milik pengguna
+          if (wantR && toRight) hitB++; else if (!wantR && toLeft) hitA++; else hitA = hitB = 0;
+          if (wantR && hitB >= 2) { seenB = 1; hitB = 0; mark(2); setMsg("Bagus!", "Sekarang tengok pelan ke kiri."); say("Bagus. Sekarang tengok ke kiri."); }
+          else if (!wantR && hitA >= 2) { seenA = 1; hitA = 0; mark(3); step = 3; setMsg("Diam sebentar", "Lihat lurus ke kamera dan jangan bergerak."); say("Bagus. Sekarang diam, lihat lurus ke kamera."); }
+          else if (wantR && toLeft && ++wrong === 6) { setMsg("Tengok ke kanan dulu", "Putar kepalamu ke sisi kananmu."); say("Tengok ke kanan dulu."); }
         } else {
-          if (ratio > FACE.turn) { hitA++; hitB = 0; } else if (ratio < 1 / FACE.turn) { hitB++; hitA = 0; } else { hitA = hitB = 0; }
-          if (hitA >= 2 && !seenA) { seenA = 1; hitA = 0; }
-          if (hitB >= 2 && !seenB) { seenB = 1; hitB = 0; }
-          const n = seenA + seenB; mark(1 + n);
-          if (n === 1) setMsg("Bagus!", "Sekarang tengok ke sisi sebaliknya.");
-          if (n === 2) {
-            $("faceBox").className = "wk-fv ok"; setMsg("Wajah terverifikasi", "Terima kasih. Melanjutkan pendaftaran…");
-            await new Promise(res => setTimeout(res, 650));
+          const calm = ratio > 0.8 && ratio < 1.25 && lastN && Math.hypot(nose.x - lastN.x, nose.y - lastN.y) < 5;
+          still = calm ? still + 1 : 0; lastN = { x: nose.x, y: nose.y };
+          if (still >= 9) {
+            const c = snap(vid, r.detection.box), q = sharp(c);
+            if ((q.v < 20 || q.m < 40) && ++tries < 6) {
+              setMsg("Foto buram", q.m < 40 ? "Terlalu gelap, cari tempat lebih terang. Mengulang…" : "Tahan ponsel dan jangan bergerak. Mengulang…"); say("Foto buram. Mohon diam dan ulangi.");
+              still = 0; await new Promise(res => setTimeout(res, 1800)); setMsg("Diam sebentar", "Lihat lurus ke kamera."); continue;
+            }
+            faceShot = c.toDataURL("image/jpeg", .82);
+            const t = document.createElement("canvas"); t.width = t.height = 128; t.getContext("2d").drawImage(c, 0, 0, 128, 128); faceThumb = t.toDataURL("image/jpeg", .75);
+            $("faceBox").className = "wk-fv ok"; setMsg("Verifikasi berhasil", "Foto diambil dan jadi foto profilmu."); say("Verifikasi berhasil.");
+            await new Promise(res => setTimeout(res, 900));
             if (my !== run) return;
             faceOK = true; faceSkipped = false; closeFace(); paintFace(); return;
           }
@@ -220,7 +244,7 @@ if (!ADM) {
     const row = $("faceRow"), ok = faceOK || faceSkipped;
     row.classList.toggle("ok", faceOK); row.classList.toggle("skip", faceSkipped);
     if (ok && $("eReg")) $("eReg").textContent = "";
-    $("faceTxt").textContent = faceOK ? "Wajah terverifikasi" : faceSkipped ? "Dilewati (pendeteksi tidak tersedia)" : "Pastikan kamu pengguna asli. Foto tidak disimpan.";
+    $("faceTxt").textContent = faceOK ? "Wajah terverifikasi" : faceSkipped ? "Dilewati (pendeteksi tidak tersedia)" : "Foto wajahmu dikirim ke pusat untuk verifikasi dan jadi foto profil. Dengan menekan Mulai, kamu setuju.";
     $("faceBtn").textContent = ok ? "Ulangi" : "Mulai";
   }
   $("faceBtn").addEventListener("click", startFace);
@@ -270,7 +294,7 @@ function finish(a) {
     wr(SET, { ...s, shopName: a.shop || s.shopName, whatsapp: a.wa || s.whatsapp, address: a.address || s.address, logo: a.logo || s.logo || "" });
   } else {
     const p = rd(PRO, {});
-    wr(PRO, { ...p, name: a.name || p.name || "", phone: a.phone || a.wa || p.phone || "", address: a.address || p.address || "" });
+    wr(PRO, { ...p, name: a.name || p.name || "", phone: a.phone || a.wa || p.phone || "", address: a.address || p.address || "", photo: a.photo || p.photo || "" });
   }
   location.reload();
 }
@@ -278,7 +302,7 @@ function finish(a) {
 $("fReg").addEventListener("submit", async e => {
   e.preventDefault();
   const v = id => $(id).value.trim(), b = $("bReg"), er = $("eReg");
-  const a = { name: v("rName"), shop: ADM ? v("rName") : "", address: v("rAddr"), phone: v("rWa"), wa: nw(v("rWa")), email: v("rEmail").toLowerCase(), logo: ADM ? logo : "" };
+  const a = { name: v("rName"), shop: ADM ? v("rName") : "", address: v("rAddr"), phone: v("rWa"), wa: nw(v("rWa")), email: v("rEmail").toLowerCase(), logo: ADM ? logo : "", photo: ADM ? "" : faceThumb };
   const pass = $("rPass").value;
   er.textContent = "";
   if (!a.name) return er.textContent = ADM ? "Nama warung wajib diisi." : "Nama wajib diisi.";
@@ -295,7 +319,7 @@ $("fReg").addEventListener("submit", async e => {
   try {
     if (window.JK && JK.register) {
       const { logo: _l, ...prof } = a;
-      await JK.register(a.email, pass, { ...prof, face: ADM ? "" : faceOK ? "ok" : faceSkipped ? "skip" : "none" });
+      await JK.register(a.email, pass, { ...prof, face: ADM ? "" : faceOK ? "ok" : faceSkipped ? "skip" : "none", hasKyc: !ADM && !!faceShot }, !ADM && faceShot ? { selfie: faceShot } : null);
       busy(b, false, "Daftar"); show("pend"); return;
     } else {
       const list = rd(AK, []);
