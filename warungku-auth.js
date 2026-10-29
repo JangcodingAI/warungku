@@ -61,7 +61,8 @@ const regFields = (ADM
   + fld("rAddr", "Alamat", "text", ADM ? "Alamat warung" : "Alamat pengantaran", 'autocomplete="street-address"')
   + fld("rWa", "Nomor WhatsApp", "tel", "08xxxxxxxxxx", 'inputmode="tel" autocomplete="tel"')
   + fld("rEmail", "Gmail", "email", "nama@gmail.com", 'autocomplete="email" inputmode="email"')
-  + pw("rPass", "Kata sandi", "new-password");
+  + pw("rPass", "Kata sandi", "new-password")
+  + (ADM ? "" : `<div class="wk-face" id="faceRow"><span class="wk-fi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M9.5 15c1.5 1.3 3.5 1.3 5 0"/></svg></span><span class="wk-ft"><b>Verifikasi wajah</b><small id="faceTxt">Pastikan kamu pengguna asli. Foto tidak disimpan.</small></span><button type="button" class="wk-fb" id="faceBtn">Mulai</button></div>`);
 
 const root = document.createElement("div");
 root.id = "wk-auth";
@@ -104,6 +105,125 @@ root.addEventListener("click", e => {
   const y = e.target.closest("[data-eye]");
   if (y) { const i = $(y.dataset.eye); i.type = i.type === "password" ? "text" : "password"; }
 });
+
+
+/* ---------- Verifikasi wajah (khusus pendaftaran pelanggan) ----------
+   Kamera depan + deteksi wajah di perangkat (face-api). Pengguna menengok ke kiri dan kanan
+   sebagai bukti kehadiran langsung. Tidak ada gambar yang diunggah atau disimpan. */
+const FACE = Object.assign({
+  required: true,
+  lib: "https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js",
+  models: ["https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/", "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights/"],
+  turn: 1.8, timeout: 45000
+}, window.WK_FACE || {});
+let faceOK = false, faceSkipped = false;
+if (!ADM) {
+  const ov = document.createElement("div");
+  ov.id = "wk-face"; ov.hidden = true; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Verifikasi wajah");
+  ov.innerHTML = `<button type="button" class="wk-fx" id="faceX" aria-label="Tutup">&times;</button>
+    <div class="wk-fv" id="faceBox"><video id="faceVid" playsinline muted autoplay></video></div>
+    <h3 id="faceH">Siapkan wajahmu</h3><p id="faceP">Memulai kamera…</p>
+    <div class="wk-steps" aria-hidden="true"><i id="fs1"></i><i id="fs2"></i><i id="fs3"></i></div>
+    <button type="button" class="wk-btn" id="faceRetry" hidden>Coba lagi</button>
+    <button type="button" class="wk-lnk" id="faceSkip" hidden>Lanjut tanpa verifikasi</button>`;
+  document.body.appendChild(ov);
+
+  let fapi = null, stream = null, run = 0;
+  const setMsg = (h, p) => { $("faceH").textContent = h; $("faceP").textContent = p; };
+  const mark = n => [1, 2, 3].forEach(k => $("fs" + k).classList.toggle("on", k <= n));
+  const loadScript = src => new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.async = true; s.onload = ok; s.onerror = () => no(new Error("lib")); document.head.appendChild(s); });
+  async function engine() {
+    if (fapi) return fapi;
+    if (!window.faceapi) await loadScript(FACE.lib);
+    const f = window.faceapi; if (!f) throw new Error("lib");
+    let ok = false;
+    for (const base of FACE.models) {
+      try { await f.nets.tinyFaceDetector.loadFromUri(base); await f.nets.faceLandmark68TinyNet.loadFromUri(base); ok = true; break; } catch (e) {}
+    }
+    if (!ok) throw new Error("model");
+    return fapi = f;
+  }
+  function stopCam() { run++; if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } const v = $("faceVid"); v.srcObject = null; }
+  function closeFace() { stopCam(); ov.hidden = true; document.documentElement.classList.remove("wk-facing"); }
+  function showFail(h, p, skip) {
+    stopCam(); setMsg(h, p); $("faceBox").className = "wk-fv bad";
+    $("faceRetry").hidden = false; $("faceSkip").hidden = !skip;
+  }
+  const camErr = e => {
+    const n = e && e.name || "";
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return "Kamera butuh koneksi aman (HTTPS) dan peramban terbaru.";
+    if (n === "NotAllowedError" || n === "SecurityError") return "Izin kamera ditolak. Aktifkan izin kamera untuk situs ini di pengaturan peramban, lalu coba lagi.";
+    if (n === "NotFoundError" || n === "OverconstrainedError") return "Kamera tidak ditemukan di perangkat ini.";
+    if (n === "NotReadableError") return "Kamera sedang dipakai aplikasi lain. Tutup aplikasi itu lalu coba lagi.";
+    return "Kamera tidak bisa dibuka. Coba lagi.";
+  };
+  async function startFace() {
+    const my = ++run;
+    ov.hidden = false; document.documentElement.classList.add("wk-facing");
+    $("faceRetry").hidden = true; $("faceSkip").hidden = true; $("faceBox").className = "wk-fv"; mark(0);
+    setMsg("Siapkan wajahmu", "Memulai kamera…");
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: "NoMedia" };
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    } catch (e) { return my === run && showFail("Kamera belum bisa dipakai", camErr(e), false); }
+    if (my !== run) { stopCam(); return; }
+    const vid = $("faceVid"); vid.srcObject = stream;
+    try { await vid.play(); } catch (e) {}
+    setMsg("Menyiapkan pendeteksi", "Memuat pendeteksi wajah, tunggu sebentar…");
+    let f;
+    try { f = await engine(); }
+    catch (e) { return my === run && showFail("Pendeteksi wajah gagal dimuat", "Periksa koneksi internet lalu coba lagi.", true); }
+    if (my !== run) return;
+    const opts = new f.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+    const t0 = Date.now(); let step = 0, front = 0, seenA = 0, seenB = 0, lastFace = Date.now(), hitA = 0, hitB = 0;
+    $("faceBox").className = "wk-fv scan";
+    setMsg("Hadapkan wajah ke kamera", "Posisikan wajahmu di dalam bingkai dengan cahaya cukup.");
+    while (my === run) {
+      if (Date.now() - t0 > FACE.timeout) return showFail("Waktu habis", "Verifikasi belum selesai. Coba lagi dengan cahaya yang lebih terang.", false);
+      let r = null;
+      try { r = await f.detectSingleFace(vid, opts).withFaceLandmarks(true); } catch (e) { r = null; }
+      if (my !== run) return;
+      if (r && r.landmarks) {
+        lastFace = Date.now();
+        const p = r.landmarks.positions, nose = p[30], j0 = p[0], j16 = p[16];
+        const vw = vid.videoWidth || 640, bw = r.detection.box.width / vw;
+        const ratio = (nose.x - j0.x) / Math.max(1e-3, (j16.x - nose.x));
+        if (bw < 0.22) setMsg("Dekatkan wajahmu", "Wajah terlalu jauh dari kamera.");
+        else if (step === 0) {
+          if (ratio > 0.7 && ratio < 1.45) { if (++front >= 4) { step = 1; mark(1); setMsg("Tengok pelan ke satu sisi", "Putar kepalamu ke kiri atau kanan, lalu ke sisi sebaliknya."); } }
+          else front = 0;
+        } else {
+          if (ratio > FACE.turn) { hitA++; hitB = 0; } else if (ratio < 1 / FACE.turn) { hitB++; hitA = 0; } else { hitA = hitB = 0; }
+          if (hitA >= 2 && !seenA) { seenA = 1; hitA = 0; }
+          if (hitB >= 2 && !seenB) { seenB = 1; hitB = 0; }
+          const n = seenA + seenB; mark(1 + n);
+          if (n === 1) setMsg("Bagus!", "Sekarang tengok ke sisi sebaliknya.");
+          if (n === 2) {
+            $("faceBox").className = "wk-fv ok"; setMsg("Wajah terverifikasi", "Terima kasih. Melanjutkan pendaftaran…");
+            await new Promise(res => setTimeout(res, 650));
+            if (my !== run) return;
+            faceOK = true; faceSkipped = false; closeFace(); paintFace(); return;
+          }
+        }
+      } else if (Date.now() - lastFace > 6000) {
+        setMsg("Wajah belum terlihat", "Dekatkan wajah ke kamera, hadap lurus, dan pastikan cukup cahaya.");
+      }
+      await new Promise(res => setTimeout(res, 110));
+    }
+  }
+  function paintFace() {
+    const row = $("faceRow"), ok = faceOK || faceSkipped;
+    row.classList.toggle("ok", faceOK); row.classList.toggle("skip", faceSkipped);
+    if (ok && $("eReg")) $("eReg").textContent = "";
+    $("faceTxt").textContent = faceOK ? "Wajah terverifikasi" : faceSkipped ? "Dilewati (pendeteksi tidak tersedia)" : "Pastikan kamu pengguna asli. Foto tidak disimpan.";
+    $("faceBtn").textContent = ok ? "Ulangi" : "Mulai";
+  }
+  $("faceBtn").addEventListener("click", startFace);
+  $("faceRetry").addEventListener("click", startFace);
+  $("faceX").addEventListener("click", closeFace);
+  $("faceSkip").addEventListener("click", () => { faceSkipped = true; faceOK = false; closeFace(); paintFace(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !ov.hidden) closeFace(); });
+}
 
 /* Unggah logo → perkecil ke 256px */
 let logo = "";
@@ -156,6 +276,11 @@ $("fReg").addEventListener("submit", async e => {
   if (a.wa.length < 10 || a.wa.length > 15) return er.textContent = "Nomor WhatsApp belum benar.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email)) return er.textContent = "Format Gmail belum benar.";
   if (pass.length < 6) return er.textContent = "Kata sandi minimal 6 karakter.";
+  if (!ADM && FACE.required && !faceOK && !faceSkipped) {
+    er.textContent = "Verifikasi wajah dulu ya. Ketuk tombol Mulai.";
+    const row = $("faceRow"); row.classList.add("need"); row.scrollIntoView({ block: "center", behavior: "smooth" });
+    setTimeout(() => row.classList.remove("need"), 1200); return;
+  }
   busy(b, true);
   try {
     if (window.JK && JK.register) {
@@ -167,6 +292,7 @@ $("fReg").addEventListener("submit", async e => {
       list.push({ ...a, hash: await sha(pass) });
       if (!wr(AK, list)) throw { message: "penyimpanan penuh" };
     }
+    if (!ADM) wr("wk_face_ok", { ok: faceOK, skipped: faceSkipped, t: Date.now() });
     finish(a);
   } catch (x) { er.textContent = fbErr(x); busy(b, false, "Daftar"); }
 });
