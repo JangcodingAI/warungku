@@ -95,6 +95,11 @@ root.innerHTML = `
     <button class="wk-btn" id="bLog">Masuk</button>
     <button type="button" class="wk-lnk dk" data-go="reg">Belum punya akun? <b>Daftar</b></button>
   </form>
+</section>
+<section class="wk-s" data-s="pend">
+  <img class="wk-logo sm" src="logo.png" alt="">
+  <div class="wk-card"><h2>Menunggu verifikasi</h2><p class="wk-sub dk">Pendaftaranmu sudah diterima. Pusat akan memeriksa datamu. Kamu bisa masuk setelah disetujui.</p>
+  <button type="button" class="wk-btn" data-go="log">Ke halaman masuk</button></div>
 </section>`;
 document.body.appendChild(root);
 
@@ -245,8 +250,12 @@ const fbErr = e => {
     "auth/email-already-in-use": "Gmail ini sudah terdaftar. Silakan masuk.",
     "auth/weak-password": "Kata sandi minimal 6 karakter.",
     "auth/invalid-email": "Format Gmail belum benar.",
-    "auth/network-request-failed": "Tidak ada koneksi internet."
+    "auth/network-request-failed": "Tidak ada koneksi internet.",
+    "wk/pending": "Akunmu masih menunggu verifikasi pusat. Coba lagi nanti.",
+    "wk/suspended": "Akun ini ditangguhkan oleh pusat." + (e && e.reason ? " Alasan: " + e.reason : ""),
+    "wk/role": "Akun ini tidak terdaftar untuk halaman ini."
   };
+  if (c === "wk/rejected") return "Pendaftaran ditolak pusat." + (e.reason ? " Alasan: " + e.reason : "");
   if (m[c]) return m[c];
   if (/invalid|wrong|user-not|credential/.test(c)) return "Gmail/nomor atau kata sandi salah.";
   return "Gagal: " + (c || (e && e.message) || "coba lagi");
@@ -285,7 +294,8 @@ $("fReg").addEventListener("submit", async e => {
   try {
     if (window.JK && JK.register) {
       const { logo: _l, ...prof } = a;
-      await JK.register(a.email, pass, prof);
+      await JK.register(a.email, pass, { ...prof, face: ADM ? "" : faceOK ? "ok" : faceSkipped ? "skip" : "none" });
+      busy(b, false, "Daftar"); show("pend"); return;
     } else {
       const list = rd(AK, []);
       if (list.some(x => x.email === a.email || x.wa === a.wa)) throw { code: "auth/email-already-in-use" };
@@ -302,6 +312,8 @@ $("fLog").addEventListener("submit", async e => {
   const id = $("lId").value.trim().toLowerCase(), pass = $("lPass").value, b = $("bLog"), er = $("eLog");
   er.textContent = "";
   if (!id || !pass) return er.textContent = "Isi Gmail/nomor WhatsApp dan kata sandi.";
+  const lk = window.WKG && WKG.locked();
+  if (lk) return er.textContent = "Terlalu banyak percobaan. Coba lagi dalam " + lk + " detik.";
   busy(b, true);
   try {
     let acc;
@@ -314,6 +326,6 @@ $("fLog").addEventListener("submit", async e => {
       if (!acc) throw { code: "auth/invalid-credential" };
     }
     finish(acc);
-  } catch (x) { er.textContent = fbErr(x); busy(b, false, "Masuk"); }
+  } catch (x) { window.WKG && WKG.fail(id); er.textContent = fbErr(x); busy(b, false, "Masuk"); }
 });
 })();

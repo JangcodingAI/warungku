@@ -130,33 +130,59 @@ function start() {
   }
   const unlisten = () => { offs.forEach(f => f()); offs = []; subscribed = false; remote = new Map(); remoteChat = new Map(); remoteRev = new Map(); };
 
-  onAuthStateChanged(auth, u => {
-    if (ADMIN) {
-      if (u && !u.isAnonymous) { listen(); dispatchEvent(new Event("jk-admin-in")); }
-      else { unlisten(); dispatchEvent(new Event("jk-admin-out")); }
-    } else if (!u) signInAnonymously(auth).catch(warn);
-    else { unlisten(); listen(); }
+  // Hanya akun berstatus "approved" (atau akun lama tanpa status) yang boleh membaca data.
+  let busy = false, stOff = null;
+  const SES = "wk_ses_" + (ADMIN ? "admin" : "customer");
+  const kick = () => signOut(auth).finally(() => { localStorage.removeItem(SES); location.reload(); });
+  onAuthStateChanged(auth, async u => {
+    if (busy) return;
+    stOff && stOff(); stOff = null;
+    if (!u) { unlisten(); if (ADMIN) dispatchEvent(new Event("jk-admin-out")); else signInAnonymously(auth).catch(warn); return; }
+    if (u.isAnonymous) { unlisten(); if (ADMIN) dispatchEvent(new Event("jk-admin-out")); else listen(); return; }
+    let st = "approved";
+    try { st = (await get(ref(db, "users/" + u.uid + "/status"))).val() || "approved"; } catch (e) {}
+    if (st !== "approved") return kick();
+    // Pusat menangguhkan akun saat sedang dipakai → langsung keluar
+    stOff = onValue(ref(db, "users/" + u.uid + "/status"), s => { const v = s.val(); if (v && v !== "approved") kick(); });
+    unlisten(); listen();
+    if (ADMIN) dispatchEvent(new Event("jk-admin-in"));
   });
 
   // Daftar / masuk akun (Gmail atau nomor WhatsApp)
   const nw = p => { p = String(p).replace(/\D/g, ""); return p[0] === "0" ? "62" + p.slice(1) : p[0] === "8" ? "62" + p : p; };
   window.JK = {
     async register(email, pass, prof) {
-      const c = await createUserWithEmailAndPassword(auth, email, pass);
-      await set(ref(db, "users/" + c.user.uid), {...prof, email, role: ADMIN ? "admin" : "customer"});
-      await set(ref(db, "phones/" + nw(prof.wa)), email);
-      return prof;
+      busy = true;
+      try {
+        const c = await createUserWithEmailAndPassword(auth, email, pass);
+        await set(ref(db, "users/" + c.user.uid), {...prof, email, role: ADMIN ? "admin" : "customer", status: "pending", createdAt: Date.now()});
+        await set(ref(db, "phones/" + nw(prof.wa)), email);
+        await signOut(auth);   // belum boleh masuk sebelum disetujui pusat
+      } finally { busy = false; }
+      if (!ADMIN) signInAnonymously(auth).catch(warn);
+      return {...prof, pending: true};
     },
     async login(id, pass) {
-      let email = String(id).trim();
-      if (!email.includes("@")) {
-        const s = await get(ref(db, "phones/" + nw(email)));
-        if (!s.exists()) throw {code: "auth/user-not-found"};
-        email = s.val();
-      }
-      const c = await signInWithEmailAndPassword(auth, email, pass);
-      const s = await get(ref(db, "users/" + c.user.uid));
-      return {...(s.val() || {}), email};
+      busy = true;
+      try {
+        let email = String(id).trim();
+        if (!email.includes("@")) {
+          const s = await get(ref(db, "phones/" + nw(email)));
+          if (!s.exists()) throw {code: "auth/user-not-found"};
+          email = s.val();
+        }
+        const c = await signInWithEmailAndPassword(auth, email, pass);
+        const p = (await get(ref(db, "users/" + c.user.uid))).val() || {}, st = p.status || "approved";
+        if (st !== "approved" || (p.role && p.role !== (ADMIN ? "admin" : "customer"))) {
+          await signOut(auth);
+          throw {code: st !== "approved" ? "wk/" + st : "wk/role", reason: p.reason || ""};
+        }
+        return {...p, email};
+      } finally { busy = false; }
+    },
+    report(ev) {
+      const u = auth.currentUser; if (!u) return;
+      set(ref(db, "security/events/" + Date.now() + Math.random().toString(36).slice(2, 7)), {...ev, uid: u.uid}).catch(() => {});
     },
     logout: () => signOut(auth),
     uid: () => (auth.currentUser ? auth.currentUser.uid : null)
