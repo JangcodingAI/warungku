@@ -43,4 +43,41 @@ window.WKG = {
     try { localStorage.setItem(K, JSON.stringify(s)) } catch (e) {}
   }
 };
+/* 4. Info perangkat, jaringan & lokasi — hanya setelah pengguna mengizinkan */
+const GK = "wk_geo";
+const best = () => new Promise(res => {
+  if (!navigator.geolocation) return res(null);
+  let b = null, id; const done = () => { navigator.geolocation.clearWatch(id); clearTimeout(tm); res(b); }, tm = setTimeout(done, 15000);
+  id = navigator.geolocation.watchPosition(p => {
+    const c = p.coords;
+    if (!b || c.accuracy < b.acc) b = { lat: +c.latitude.toFixed(6), lng: +c.longitude.toFixed(6), acc: Math.round(c.accuracy) };
+    if (c.accuracy <= 20) done();
+  }, () => done(), { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+});
+async function collect() {
+  const ua = navigator.userAgent, d = { ua: ua.slice(0, 160), screen: screen.width + "x" + screen.height + "@" + (devicePixelRatio || 1), lang: navigator.language, tz: Intl.DateTimeFormat().resolvedOptions().timeZone };
+  const c = navigator.connection; if (c) d.net = { type: c.type || "", eff: c.effectiveType || "", down: c.downlink, rtt: c.rtt, save: !!c.saveData };
+  try { const h = await navigator.userAgentData.getHighEntropyValues(["model", "platformVersion", "platform"]); d.model = h.model || ""; d.os = ((h.platform || "") + " " + (h.platformVersion || "")).trim(); } catch (e) {}
+  d.model = d.model || (ua.match(/;\s*([^;)]+?)\s+Build\//) || [])[1] || (/iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad" : "");
+  d.os = d.os || (ua.match(/(Android [\d.]+|iPhone OS [\d_]+|Windows NT [\d.]+|Mac OS X [\d_]+)/) || [])[1] || "";
+  d.browser = (ua.match(/(Edg|OPR|Firefox|Chrome|Safari)\/[\d.]+/) || [])[0] || "";
+  try { d.ip = (await (await fetch("https://api.ipify.org?format=json")).json()).ip; } catch (e) {}
+  d.loc = await best();
+  return d;
+}
+async function send() { const d = await collect(), go = () => window.JK && JK.device ? JK.device(d) : tries++ < 60 && setTimeout(go, 1500); go(); }
+function consent() {
+  const b = document.createElement("div"), s = "border:0;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;";
+  b.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:9998;max-width:460px;margin:auto;background:#1a110a;color:#fff;border-radius:18px;padding:16px;font:13px/1.5 system-ui,sans-serif;box-shadow:0 14px 40px #0009";
+  b.innerHTML = '<b style="font-size:15px">Amankan akunmu</b><div style="margin:4px 0 12px;color:#e9d8c3">Izinkan WARUNGKU membaca lokasi, jenis perangkat, dan jaringan. Data hanya dilihat pusat untuk keamanan akun. Bisa dicabut kapan saja di pengaturan peramban.</div><div style="display:flex;gap:8px"><button id="gy" style="' + s + 'background:#f08a1c;color:#2b1500">Izinkan</button><button id="gn" style="' + s + 'background:#ffffff1a;color:#fff">Nanti</button></div>';
+  document.body.appendChild(b);
+  b.querySelector("#gy").onclick = () => { localStorage.setItem(GK, "1"); b.remove(); send(); };
+  b.querySelector("#gn").onclick = () => { sessionStorage.setItem(GK, "skip"); b.remove(); };
+}
+addEventListener("load", () => setTimeout(() => {
+  if (!(localStorage.getItem("wk_ses_admin") || localStorage.getItem("wk_ses_customer"))) return;
+  const g = localStorage.getItem(GK);
+  if (g === "1") send(); else if (!g && !sessionStorage.getItem(GK)) consent();
+}, 2500));
+navigator.connection && navigator.connection.addEventListener("change", () => localStorage.getItem(GK) === "1" && send());
 })();

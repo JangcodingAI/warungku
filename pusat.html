@@ -22,7 +22,7 @@ input,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--line);
 .tb:hover{background:#ffffff12}.tb.on{background:#fff;color:var(--rail)}.tb svg{width:19px;height:19px;flex:none}
 .tb .n{margin-left:auto;background:var(--or);color:#2b1500;border-radius:99px;font-size:11px;font-weight:800;padding:0 7px;min-width:20px;text-align:center}
 .rail .out{margin-top:auto}
-main{padding:28px clamp(16px,3vw,40px) 40px;max-width:1040px;width:100%}
+main{padding:86px clamp(16px,3vw,40px) 40px;max-width:1040px;width:100%}
 .hd{margin-bottom:20px}.hd h2{font-size:24px;letter-spacing:-.6px}.hd p{color:var(--mut)}
 .cnt{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 .seg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;text-align:left;color:var(--mut);font-weight:600;font-size:12px}
@@ -52,15 +52,26 @@ dialog{border:0;border-radius:22px;padding:22px;width:min(92vw,380px)}dialog::ba
 #toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--rail);color:#fff;padding:10px 16px;border-radius:99px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:9}#toast.on{opacity:1}
 @media(max-width:820px){#app{display:block}.rail{position:fixed;inset:auto 0 0 0;height:auto;flex-direction:row;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:5}.rail .br{display:none}.tb{flex-direction:column;gap:2px;font-size:11px;justify-content:center;padding:7px;text-align:center}.tb .n{position:absolute;margin:0;transform:translate(14px,-8px)}.tb{position:relative}.rail .out{margin:0;width:auto}main{padding-bottom:90px}.cnt{grid-template-columns:1fr 1fr}.uc{flex-wrap:wrap}.ua{flex-direction:row;width:100%}.ua .btn{flex:1}.hero{grid-template-columns:1fr;text-align:center}.pulse{margin:auto}}
 @media(prefers-reduced-motion:reduce){.pulse::after{animation:none}}
+.top{position:fixed;top:0;right:0;left:236px;z-index:6;display:flex;justify-content:flex-end;padding:12px clamp(16px,3vw,40px);background:#f4f1ecd9;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.bell{position:relative;width:44px;height:44px;border-radius:14px;background:#fff;border:1px solid var(--line);display:grid;place-items:center}.bell svg{width:20px;height:20px}
+.bell b{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;font-size:10px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;display:grid;place-items:center;border:2px solid var(--bg)}
+.np{position:absolute;right:clamp(16px,3vw,40px);top:64px;width:min(92vw,350px);max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px #1a110a33;padding:6px}
+.np button{display:flex;gap:10px;width:100%;text-align:left;padding:10px;border-radius:12px}.np button:hover{background:#f7f3ec}.np small{color:var(--mut);word-break:break-word}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.stc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 14px}.stc small{color:var(--mut);display:block;font-weight:600}.stc b{font-size:15px}.stc.ok b{color:var(--ok)}.stc.bad b{color:var(--bad)}
+.topo{position:relative;height:340px;border-radius:24px;overflow:hidden;margin-bottom:14px;background:radial-gradient(700px 320px at 50% 110%,#3a2210,#0f0a06)}.topo canvas{width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
+.tl{position:absolute;left:16px;top:12px;color:#cdbba5;font-size:12px;pointer-events:none}.uc a{color:var(--or);font-weight:700}
+@media(max-width:820px){.top{left:0}.stats{grid-template-columns:1fr 1fr}.topo{height:270px}}
 </style></head><body>
 <div id="gate"><form class="gb" id="lf"><div class="mk">🛡️</div><h1>Pusat Kendali</h1><p>Khusus pengelola pusat WARUNGKU.</p>
 <input id="lm" type="email" placeholder="Email pusat" autocomplete="username" required><input id="lp" type="password" placeholder="Kata sandi" autocomplete="current-password" required>
 <div class="er" id="le" role="alert"></div><button class="btn pri">Masuk</button></form></div>
 
 <div id="app" hidden>
+<header class="top"><button class="bell" id="bell" aria-label="Notifikasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><b id="bc" hidden>0</b></button><div class="np" id="np" hidden></div></header>
 <nav class="rail"><div class="br"><div class="mk">🛡️</div><div><b>Pusat Kendali</b><span>WARUNGKU</span></div></div>
 <button class="tb on" data-t="ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg>Verifikasi<span class="n" id="bd" hidden>0</span></button>
 <button class="tb" data-t="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Keamanan<span class="n" id="bs" hidden>0</span></button>
+<button class="tb" data-t="dev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>Perangkat</button>
 <button class="tb out" data-a="out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Keluar</button></nav>
 <main>
 <section id="t-ver"><div class="hd"><h2>Verifikasi akun</h2><p>Setujui atau tolak pendaftar baru. Akun belum disetujui tidak bisa masuk.</p></div>
@@ -71,9 +82,11 @@ dialog{border:0;border-radius:22px;padding:22px;width:min(92vw,380px)}dialog::ba
 
 <section id="t-sec" hidden><div class="hd"><h2>Monitor keamanan</h2><p>Kejadian dari semua perangkat masuk ke sini secara langsung.</p></div>
 <div class="hero l0" id="hero"><div class="pulse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg></div><div><h3 id="hl">Aman</h3><p id="hs"></p></div><svg class="bars" id="bars" viewBox="0 0 288 56" preserveAspectRatio="none" aria-label="Kejadian 24 jam terakhir"></svg></div>
-<div class="ctl"><button class="btn" data-a="scan">Pindai database</button><button class="btn pri" data-a="ai">Analisis AI</button><label class="sw"><input type="checkbox" id="auto"> Perbaikan otomatis</label></div>
+<div class="stats" id="stats"></div><div class="topo"><canvas id="topo" aria-label="Topografi ancaman 3D"></canvas><span class="tl">Topografi ancaman 3D langsung. Seret untuk memutar.</span></div>
+<div class="ctl"><button class="btn" data-a="scan">Pindai database</button><button class="btn pri" data-a="ai">Analisis AI</button><button class="btn" data-a="csv">Ekspor CSV</button><button class="btn" data-a="clr">Hapus riwayat selesai</button><label class="sw"><input type="checkbox" id="auto"> Perbaikan otomatis</label></div>
 <div class="plan" id="plan" hidden></div>
 <ul class="feed" id="feed"></ul></section>
+<section id="t-dev" hidden><div class="hd"><h2>Perangkat dan lokasi</h2><p>Hanya dari pengguna yang memberi izin. Peramban hanya bisa membaca jenis jaringan (Wi-Fi/seluler) dan kecepatannya, bukan nama Wi-Fi atau operator.</p></div><div id="dl"></div></section>
 </main></div>
 
 <dialog id="dlg"><form method="dialog"><h3 id="dt"></h3><textarea id="dr" placeholder="Alasan (akan dilihat pengguna)"></textarea><div class="ua"><button class="btn" value="x">Batal</button><button class="btn pri" value="go">Kirim</button></div></form></dialog>
@@ -83,7 +96,7 @@ dialog{border:0;border-radius:22px;padding:22px;width:min(92vw,380px)}dialog::ba
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getDatabase,ref,set,get,update,onValue} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import {getDatabase,ref,set,get,update,remove,onValue} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 const app=initializeApp({apiKey:"AIzaSyAvX3WWZQcuZFwiWzn3Syzg9gtWpkhoWq0",authDomain:"warungku-f57fe.firebaseapp.com",databaseURL:"https://warungku-f57fe-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"warungku-f57fe",appId:"1:673408074768:web:aed0ac7d91cb2676037695"},"pusat");
 const auth=getAuth(app),db=getDatabase(app),$=i=>document.getElementById(i);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -101,7 +114,7 @@ onAuthStateChanged(auth,async u=>{offs.forEach(f=>f());offs=[];
   let ok=false;try{ok=(await get(ref(db,"pusat/"+u.uid))).val()===true}catch(e){}
   if(!ok){$("le").textContent="Akun ini tidak punya akses pusat.";await signOut(auth);return}
   me=u;$("gate").hidden=true;$("app").hidden=false;
-  offs.push(onValue(ref(db,"users"),s=>{users=s.val()||{};draw()},err),onValue(ref(db,"security/events"),s=>{evs=s.val()||{};draw();if($("auto").checked)run()},err));
+  setTimeout(ping,600);offs.push(onValue(ref(db,"devices"),s=>{devs=s.val()||{};draw()},err),onValue(ref(db,".info/connected"),s=>{up=s.val()?1:0;draw()}),onValue(ref(db,"users"),s=>{users=s.val()||{};draw()},err),onValue(ref(db,"security/events"),s=>{evs=s.val()||{};draw();if($("auto").checked)run()},err));
 });
 
 /* ---------- Tampilan ---------- */
@@ -109,9 +122,9 @@ const openEv=()=>Object.entries(evs).map(([id,e])=>({id,...e})).filter(e=>e.stat
 function draw(){
   const L=Object.entries(users).map(([id,u])=>({id,...u})),c=k=>L.filter(u=>st(u)===k).length;
   $("bd").hidden=!c("pending");$("bd").textContent=c("pending");const o=openEv();$("bs").hidden=!o.length;$("bs").textContent=o.length;
-  $("t-ver").hidden=tab!=="ver";$("t-sec").hidden=tab!=="sec";
+  $("t-ver").hidden=tab!=="ver";$("t-sec").hidden=tab!=="sec";$("t-dev").hidden=tab!=="dev";
   document.querySelectorAll(".tb[data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
-  tab==="ver"?drawVer(L,c):drawSec();
+  tab==="ver"?drawVer(L,c):tab==="sec"?(drawSec(),drawStats()):drawDev();bellUp(L,o);
 }
 function drawVer(L,c){
   $("cnt").innerHTML=[["pending","Menunggu"],["approved","Disetujui"],["rejected","Ditolak"],["suspended","Ditangguhkan"]].map(([k,n])=>`<button class="seg ${flt===k?"on":""}" data-f="${k}"><b>${c(k)}</b>${n}</button>`).join("");
@@ -122,7 +135,7 @@ function drawVer(L,c){
 }
 const face=f=>f==="ok"?'<span class="tg fo">Wajah terverifikasi</span>':f==="skip"?'<span class="tg fs">Wajah dilewati</span>':f==="none"?'<span class="tg fn">Tanpa verifikasi wajah</span>':"";
 function card(u){const s=st(u),adm=u.role==="admin",nm=u.shop||u.name||"(tanpa nama)";
-  const a=s==="pending"?`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui</button><button class="btn sm no" data-a="no" data-id="${u.id}">Tolak</button>`:s==="approved"?`<button class="btn sm no" data-a="sus" data-id="${u.id}">Tangguhkan</button>`:`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui ulang</button>`;
+  const a=s==="pending"?`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui</button><button class="btn sm no" data-a="no" data-id="${u.id}">Tolak</button>`:s==="approved"?`<button class="btn sm no" data-a="sus" data-id="${u.id}">Tangguhkan</button>`:`<button class="btn sm ok" data-a="ok" data-id="${u.id}">Setujui ulang</button>${s==="suspended"?`<button class="btn sm no" data-a="del" data-id="${u.id}">Hapus</button>`:""}`;
   return `<article class="uc"><div class="av ${adm?"a":""}">${esc(nm[0]||"?").toUpperCase()}</div><div class="ub"><h3>${esc(nm)} <span class="tg ${adm?"ta":""}">${adm?"Penjual":"Pelanggan"}</span>${adm?"":face(u.face)}</h3><p>${esc(u.email)}<br>WA ${esc(u.wa||u.phone)}</p><p>${esc(u.address)}</p><small>${ago(u.createdAt)}${u.reason?" — Alasan: "+esc(u.reason):""}</small></div><div class="ua">${a}</div></article>`}
 function drawSec(){
   const E=Object.entries(evs).map(([id,e])=>({id,...e})).sort((a,b)=>b.t-a.t),o=E.filter(e=>e.status!=="fixed"),day=E.filter(e=>Date.now()-e.t<864e5);
@@ -172,8 +185,8 @@ async function run(){if(working)return;working=true;try{const o=openEv();if(o.le
 $("auto").checked=localStorage.getItem("pz_auto")==="1";
 $("auto").onchange=e=>{localStorage.setItem("pz_auto",e.target.checked?"1":"0");e.target.checked&&run()};
 $("q").oninput=$("rl").onchange=draw;
-document.addEventListener("click",async e=>{const t=e.target.closest("[data-t],[data-f],[data-a]");if(!t)return;const d=t.dataset,id=d.id;
-  if(d.t){tab=d.t;draw()}else if(d.f){flt=d.f;draw()}
+document.addEventListener("click",async e=>{const t=e.target.closest("[data-t],[data-f],[data-a],[data-go]");if(!t)return;const d=t.dataset,id=d.id;
+  if(d.go){tab=d.go;if(d.go==="ver")flt="pending";$("np").hidden=true;draw()}else if(d.t){tab=d.t;draw()}else if(d.f){flt=d.f;draw()}
   else if(d.a==="ok")decide(id,"approved");
   else if(d.a==="no")ask("Tolak pendaftaran",r=>decide(id,"rejected",r));
   else if(d.a==="sus")ask("Tangguhkan akun",r=>decide(id,"suspended",r));
@@ -183,5 +196,48 @@ document.addEventListener("click",async e=>{const t=e.target.closest("[data-t],[
   else if(d.a==="apply"){const n=await apply(plan.actions);plan=null;toast(n+" perbaikan diterapkan")}
   else if(d.a==="fix"){const e1=openEv().filter(x=>x.id===id),p=await analyze(e1);p.actions.length?(await apply(p.actions),toast("Diperbaiki")):toast("Perlu tinjauan manual")}
   else if(d.a==="ign")fix(id,"Diabaikan pusat").catch(err);
+  else if(d.a==="del"){const u=users[id]||{};if(confirm("Hapus akun "+(u.shop||u.name||u.email||"ini")+" secara permanen?"))purge(id)}
+  else if(d.a==="csv")csv();
+  else if(d.a==="clr")clr();
   else if(d.a==="out")signOut(auth)});
+const nw=p=>{p=String(p||"").replace(/\D/g,"");return p[0]==="0"?"62"+p.slice(1):p[0]==="8"?"62"+p:p};
+async function purge(id){const u=users[id]||{};try{await remove(ref(db,"devices/"+id));await remove(ref(db,"users/"+id));if(u.wa)await remove(ref(db,"phones/"+nw(u.wa)));toast("Akun dihapus")}catch(e){err(e)}}
+function csv(){const r=[["waktu","jenis","tingkat","peran","pesan","status"],...Object.values(evs).map(e=>[new Date(e.t).toISOString(),e.type,e.sev,e.role,e.msg,e.status||"open"])];
+  const b=new Blob(["\ufeff"+r.map(x=>x.map(v=>'"'+String(v??"").replace(/^[=+\-@]/,"'$&").replace(/"/g,'""')+'"').join(",")).join("\n")],{type:"text/csv"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="keamanan.csv";a.click()}
+const clr=()=>{const u={};Object.entries(evs).forEach(([k,e])=>e.status==="fixed"&&(u[k]=null));update(ref(db,"security/events"),u).then(()=>toast("Riwayat selesai dihapus")).catch(err)};
+let up=0,lat=0,devs={};
+async function ping(){if(!me)return;const t=performance.now();try{await get(ref(db,"pusat/"+me.uid));lat=Math.round(performance.now()-t)}catch(e){lat=0}tab==="sec"&&drawStats()}
+setInterval(ping,15000);
+function drawStats(){const D=Object.values(devs);$("stats").innerHTML=[["Database",up?"Terhubung":"Terputus",up?"ok":"bad"],["Latensi",lat?lat+" ms":"mengukur…",lat>400?"bad":"ok"],["Perangkat",D.length+" ("+D.filter(d=>d.loc).length+" berlokasi)",""],["Ditangguhkan",Object.values(users).filter(u=>u.status==="suspended").length,""]].map(([a,b,c])=>`<div class="stc ${c}"><small>${a}</small><b>${esc(b)}</b></div>`).join("")}
+function bellUp(L,o){const p=L.filter(u=>st(u)==="pending"),n=p.length+o.length;$("bc").hidden=!n;$("bc").textContent=n>99?"99+":n;
+  $("np").innerHTML=n?[...p.slice(0,6).map(u=>`<button data-go="ver"><span>👤</span><span><b>${esc(u.shop||u.name||"Pendaftar")}</b><br><small>Minta verifikasi, ${ago(u.createdAt)}</small></span></button>`),...o.slice(0,6).map(e=>`<button data-go="sec"><span>⚠️</span><span><b>${esc(TYPE[e.type]||e.type)}</b><br><small>${esc(e.msg)}</small></span></button>`)].join(""):`<div class="empty" style="border:0">Tidak ada notifikasi baru.</div>`}
+function drawDev(){const E=Object.entries(devs).map(([id,d])=>({id,...d})).sort((a,b)=>b.t-a.t);
+  $("dl").innerHTML=E.length?E.map(d=>{const u=users[d.id]||{},nm=u.shop||u.name||u.email||d.id,n=d.net||{},l=d.loc,adm=d.role==="admin",q=l?(l.acc<=25?["Sangat akurat","fo"]:l.acc<=100?["Cukup akurat","fs"]:["Kurang akurat","fn"]):null;
+    return `<article class="uc"><div class="av ${adm?"a":""}">📱</div><div class="ub"><h3>${esc(nm)} <span class="tg ${adm?"ta":""}">${adm?"Penjual":"Pelanggan"}</span></h3>
+<p>${esc([d.model,d.os,d.browser].filter(Boolean).join(", ")||"Perangkat tidak dikenali")}</p>
+<p>Jaringan: ${esc([n.type,n.eff&&n.eff.toUpperCase(),n.down&&n.down+" Mbps",n.rtt!=null&&n.rtt+" ms",n.save&&"hemat data"].filter(Boolean).join(", ")||"tidak terbaca")}${d.ip?" (IP "+esc(d.ip)+")":""}</p>
+<p>Layar ${esc(d.screen)}, bahasa ${esc(d.lang)}, zona ${esc(d.tz)}</p>
+<p>${l?`Lokasi ${l.lat}, ${l.lng} (±${l.acc} m) <span class="tg ${q[1]}">${q[0]}</span> <a href="https://www.google.com/maps?q=${l.lat},${l.lng}" target="_blank" rel="noopener">Buka peta</a>`:"Lokasi belum diizinkan"}</p><small>Diperbarui ${ago(d.t)}</small></div></article>`}).join(""):`<div class="empty">Belum ada perangkat. Pengguna akan diminta izin saat masuk.</div>`}
+/* Topografi 3D: tinggi bukit = tingkat ancaman, bukit kecil = posisi perangkat */
+const cv=$("topo"),cx=cv.getContext("2d");let rot=.7,dr=null;
+cv.onpointerdown=e=>{dr=e.clientX;cv.setPointerCapture(e.pointerId)};cv.onpointermove=e=>{if(dr!=null){rot+=(e.clientX-dr)/110;dr=e.clientX}};cv.onpointerup=()=>dr=null;
+const hn=s=>parseInt(hash(String(s)),36)%997/997;
+function srcs(){const P=[],L=Object.values(devs).filter(d=>d.loc);
+  Object.entries(evs).forEach(([id,e])=>{if(e.status!=="fixed")P.push({x:hn(id)*.8-.4,y:hn(id+"z")*.8-.4,h:.18*(e.sev||1)})});
+  if(L.length){const la=L.map(d=>d.loc.lat),ln=L.map(d=>d.loc.lng),a0=Math.min(...la),a1=Math.max(...la),n0=Math.min(...ln),n1=Math.max(...ln);
+    L.forEach(d=>P.push({x:((d.loc.lng-n0)/((n1-n0)||1)-.5)*.8,y:((d.loc.lat-a0)/((a1-a0)||1)-.5)*.8,h:.1}))}
+  return P}
+function loop(t){requestAnimationFrame(loop);if(tab!=="sec")return;
+  const k=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w)return;if(cv.width!==Math.round(w*k)||cv.height!==Math.round(h*k)){cv.width=Math.round(w*k);cv.height=Math.round(h*k)}
+  cx.setTransform(k,0,0,k,0,0);cx.clearRect(0,0,w,h);if(dr==null)rot+=.003;
+  const P=srcs(),N=34,M=24,Z=[],c=Math.cos(rot),s=Math.sin(rot),S=Math.min(w,h*2)*.95;
+  for(let i=0;i<=N;i++){Z[i]=[];for(let j=0;j<=M;j++){const u=i/N-.5,v=j/M-.5;let y=.035*Math.sin(u*9+t/700)*Math.cos(v*8+t/900);
+    for(const p of P)y+=p.h*Math.exp(-((u-p.x)**2+(v-p.y)**2)/.012);
+    const x=u*c-v*s,z=u*s+v*c,q=1.6/(1.6+z);Z[i][j]={X:w/2+x*S*q,Y:h*.64+(z*.5-y)*S*q,y}}}
+  const seg=(a,b)=>{const m=Math.min(1,(a.y+b.y)/.5);cx.strokeStyle=`hsla(${165-m*165},85%,${50+m*10}%,${.3+m*.65})`;cx.beginPath();cx.moveTo(a.X,a.Y);cx.lineTo(b.X,b.Y);cx.stroke()};
+  for(let i=0;i<=N;i++)for(let j=0;j<=M;j++){if(i<N)seg(Z[i][j],Z[i+1][j]);if(j<M)seg(Z[i][j],Z[i][j+1])}}
+requestAnimationFrame(loop);
+$("bell").onclick=()=>{$("np").hidden=!$("np").hidden};
+
+</script></body></html>
 </script></body></html>

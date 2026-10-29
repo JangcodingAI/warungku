@@ -253,7 +253,8 @@ const fbErr = e => {
     "auth/network-request-failed": "Tidak ada koneksi internet.",
     "wk/pending": "Akunmu masih menunggu verifikasi pusat. Coba lagi nanti.",
     "wk/suspended": "Akun ini ditangguhkan oleh pusat." + (e && e.reason ? " Alasan: " + e.reason : ""),
-    "wk/role": "Akun ini tidak terdaftar untuk halaman ini."
+    "wk/role": "Akun ini tidak terdaftar untuk halaman ini.",
+    "wk/deleted": "Akun ini sudah dihapus oleh pusat."
   };
   if (c === "wk/rejected") return "Pendaftaran ditolak pusat." + (e.reason ? " Alasan: " + e.reason : "");
   if (m[c]) return m[c];

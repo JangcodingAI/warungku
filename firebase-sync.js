@@ -140,10 +140,10 @@ function start() {
     if (!u) { unlisten(); if (ADMIN) dispatchEvent(new Event("jk-admin-out")); else signInAnonymously(auth).catch(warn); return; }
     if (u.isAnonymous) { unlisten(); if (ADMIN) dispatchEvent(new Event("jk-admin-out")); else listen(); return; }
     let st = "approved";
-    try { st = (await get(ref(db, "users/" + u.uid + "/status"))).val() || "approved"; } catch (e) {}
+    try { const p = (await get(ref(db, "users/" + u.uid))).val(); st = p ? (p.status || "approved") : "deleted"; } catch (e) {}
     if (st !== "approved") return kick();
     // Pusat menangguhkan akun saat sedang dipakai → langsung keluar
-    stOff = onValue(ref(db, "users/" + u.uid + "/status"), s => { const v = s.val(); if (v && v !== "approved") kick(); });
+    stOff = onValue(ref(db, "users/" + u.uid), s => { const p = s.val(); if (!p || (p.status && p.status !== "approved")) kick(); });
     unlisten(); listen();
     if (ADMIN) dispatchEvent(new Event("jk-admin-in"));
   });
@@ -172,13 +172,19 @@ function start() {
           email = s.val();
         }
         const c = await signInWithEmailAndPassword(auth, email, pass);
-        const p = (await get(ref(db, "users/" + c.user.uid))).val() || {}, st = p.status || "approved";
+        const p0 = (await get(ref(db, "users/" + c.user.uid))).val();
+        if (!p0) { await signOut(auth); throw {code: "wk/deleted"}; }
+        const p = p0, st = p.status || "approved";
         if (st !== "approved" || (p.role && p.role !== (ADMIN ? "admin" : "customer"))) {
           await signOut(auth);
           throw {code: st !== "approved" ? "wk/" + st : "wk/role", reason: p.reason || ""};
         }
         return {...p, email};
       } finally { busy = false; }
+    },
+    device(d) {
+      const u = auth.currentUser; if (!u || u.isAnonymous) return;
+      set(ref(db, "devices/" + u.uid), {...d, role: ADMIN ? "admin" : "customer", t: Date.now()}).catch(() => {});
     },
     report(ev) {
       const u = auth.currentUser; if (!u) return;
